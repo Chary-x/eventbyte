@@ -1,0 +1,32 @@
+{% include 'components/base.html' %} 
+{% block css %}
+<link rel="stylesheet" href="/static/css/pages/auth/login.css" type="text/css">
+{% endblock %}
+{% block content %}
+<body>
+    <div class="page-container">
+        <form class="form-container">
+            <h1>Login</h1>
+            <fieldset>
+                <label>
+                    <input 
+                        type="email"
+                        placeholder="Enter Your Email"
+                    >
+                </label>
+
+                <label>
+                    <input
+                        type="password"
+                        placeholder="Enter Your Password"
+                    >
+                </label>
+            <fieldset>
+            <button type ="submit">Login</button>
+            <p><a href="/forgot-password">Forgot Password?</a></p>
+
+        </form>
+    </div>
+
+</body>
+{% endblock %}

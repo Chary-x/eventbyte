@@ -1,0 +1,14 @@
+body{
+    background-color: #93B1A6 ;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+
+}
+
+h1, h2{
+    color: #164c31;
+}
+h3,h4{
+    color: #000000
+}

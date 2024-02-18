@@ -1,0 +1,62 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; 
+    scroll-behavior: smooth; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    transition: background-color 0.5s ease;
+}
+
+.main {
+    margin: 20px auto; 
+}
+
+.container .hero {
+    margin-top: 50px;
+    margin-bottom: 15rem;
+    height: 400px;
+    align-self: center;
+    text-align: center;
+}
+
+.container .hero h1 {
+    font-size: 36px;
+}
+
+.container .features {
+    display: flex;
+    flex-direction: column;
+    background: #6e9486;
+    text-decoration: None;
+    text-align: center;
+    padding: 0px;
+    list-style: None;
+}
+
+.features ul{
+    list-style: None;
+}
+
+.container .features .provide ul,
+.container .features .other-features ul {
+    padding: 0px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center; 
+    gap: 2rem;
+}
+
+.container .features .provide li,
+.container .features .other-features li {
+    margin: 30px 15px; /
+}
+
+
+.container .features .other-features{
+    background-color: #93B1A6;
+    flex-grow: 1;
+}
+
+
+

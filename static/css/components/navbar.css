@@ -1,0 +1,50 @@
+
+nav {
+    text-align: right; 
+    background-color: #183D3D;
+    height: 64px;
+    
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding-top: 7px;
+    overflow: hidden;
+    display: inline-block;
+}
+
+nav li {
+    display: inline-block; 
+}
+
+nav li a {
+    position: relative; 
+    display: block;
+    color: white;
+    padding: 14px 16px;
+    text-decoration: none;  
+    
+}
+
+nav li a:hover {
+    color: grey;
+    transition: all 0.5s;
+}
+
+/* growing line fx */
+nav li a::before {
+    content: '';
+    position: absolute;
+    bottom: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    width: 0;
+    height: 2px;
+    background: white;
+    transition: width 0.3s;
+}
+
+nav li a:hover::before {
+    width: 100%; 
+}

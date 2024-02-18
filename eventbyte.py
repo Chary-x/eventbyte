@@ -38,3 +38,16 @@ def reqs():
 @app.route('/')
 def index():
    return render_template('pages/index.html')
+
+@app.route('/auth/register')
+def register():
+   return render_template('pages/auth/register.html')
+
+@app.route('/auth/login')
+def login():
+   return render_template('pages/auth/login.html')
+
+
+@app.route('/auth/forgot-password')
+def forgot_password():
+   pass

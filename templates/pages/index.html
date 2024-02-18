@@ -1,14 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <title>Coursework Example</title>
-    </head>
-    <body>
-        <h1>CS139 Web Development Technologies Coursework</h1>
-        <p>It Works!</p>
-        <h2>README.md</h2>
-        <pre>{{README}}</pre>
-        <h2>requirements.txt</h2>
-        <pre>{{requirements}}</pre>
-    </body>
-</html>
+
+
+{% extends "components/base.html" %} 
+{% block css %} 
+<link rel="stylesheet" href="/static/css/components/navbar.css" type="text/css"> 
+<link rel="stylesheet" href="/static/css/base_styles.css" type="text/css">
+<link rel="stylesheet" href="/static/css/pages/index.css" type="text/css">
+{% endblock %}
+
+{% block content %}
+<body>
+    <div class="container">
+        <section class="hero">
+            <h1>Plan All Of Your Events With Eventbyte!</h1>
+            <h3>Need to plan an event? Use Eventbyte Today!</h3>
+        </section>
+
+        <section class="features">
+            <h2>What We Provide</h2>
+            <div class="provide">
+                <!-- todo -> get good definitions for each from the course spec
+                    provide images of each
+                    put in row flex on what we provide
+                    nice card
+                
+                -->
+                <ul>
+                    <li>
+                        <h3>Super Users</h3>
+                        <p>Event admins, capable of viewing all evente allocations and</p>
+                    </li>
+                    <li>
+                        <h3>Track Progress</h3>
+                        <p>Easily mark items as complete to track your progress and stay motivated.</p>
+                    </li>
+                    <li>
+                        <h3>User Registration</h3>
+                        <p>Seamless user registration process saddwasdto create and manage your account.</p>
+                    </li>
+                    <li>
+                        <h3>Secure Access</h3>
+                        <p>Ensure data security dwasdwaasdawsdawand privacy by requiring users to log in before accessing the application.</p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="other-features">
+                <h2>Quality Of Life</h2>
+                <ul>
+                    <li>
+                        <h3>Multiple Lists</h3>
+                        <p>Allow users to create and manage more than one list of productivity items.</p>
+                    </li>
+                    <li>
+                        <h3>Share Lists</h3>
+                        <p>Collaborate with others by sharing your lists and working together on tasks.</p>
+                    </li>
+                    <li>
+                        <h3>Email Notifications</h3>
+                        <p>Receive email notifications for shared lists to stay updated on changes and updates.</p>
+                    </li>
+                    <li>
+                        <h3>List Categories</h3>
+                        <p>Organize your lists into categories such as coursework, revision, private study, etc., for better organization.</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+</body>
+
+    
+
+
+{% endblock %}
