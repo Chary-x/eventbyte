@@ -1,29 +1,48 @@
 {% include 'components/base.html' %} 
 {% block css %}
 <link rel="stylesheet" href="/static/css/pages/auth/register.css" type="text/css">
+
+{% endblock %}
+{% block js %}
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/registration.js"></script>
 {% endblock %}
 {% block content %}
-<body>
+<body>  
+    <!-- generate toast for redirecting flashes -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                showToast("{{ message }}", "{{ category }}");
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+                
     <div class="page-container">
-        <form class="form-container">
+        <form id="register-form" class="form-container" action="/auth/register-user" method="POST" onsubmit="registerUser()">
             <h1>Registration</h1>
             <fieldset>
                 <legend>Personal Information</legend>
                 <div class="input-group">
                     <label>
                         <input 
+                            name="email"
                             type="email"
                             placeholder="Enter Your Email"
                         >
                     </label>
                     <label>
                         <input 
+                            name="forename"
                             type="text"
                             placeholder="Enter Your First Name"
                         >
                     </label>
                     <label>
                         <input 
+                            name="surname"
                             type="text"
                             placeholder="Enter Your Surname"
                         >
@@ -33,27 +52,24 @@
             <fieldset>
                 <legend>Account Information</legend>
                 <div class="input-group">
-                    <label>
-                        <input  
-                            type="text"
-                            placeholder="Enter Your Username"
-                        >   
-                    </label>
+
                     <label>
                         <input
+                            name="password"
                             type="password"
                             placeholder="Enter Your Password"
                         >
                     </label>
                     <label>
                         <input
+                            name="confirm-password"
                             type="password"
                             placeholder="Confirm Your Password"
                         >
                     </label>
                 </div>
             </fieldset>
-            <button type="submit">Register</button>
+            <button type="submit">Create Account</button>
         </form>
     </div>
 </body>

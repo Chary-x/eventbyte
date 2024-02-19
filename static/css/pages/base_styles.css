@@ -12,3 +12,28 @@ h1, h2{
 h3,h4{
     color: #000000
 }
+
+/* toast tyles */
+
+.toast{
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 9999;
+    display: none;
+}
+
+.error{
+    background-color: red;
+}
+.success{
+    background-color: rgb(7, 119, 37);
+}
+
+.message{
+    background-color: white;
+}
