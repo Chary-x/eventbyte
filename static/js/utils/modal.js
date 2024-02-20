@@ -5,8 +5,14 @@ $(document).ready(function(){
     });
 
     $(".close-modal").click(function(e){
-        $("#myModal").hide();
+        hideModal();
     });
+
+    $(".modal-form").submit(function(){
+        if(sanitiseInputs()){           
+            $(this).submit()
+        }
+    })
 });
 
 
@@ -16,6 +22,13 @@ function showModal(){
 }
 
 function hideModal(){
+    $('.modal-background').hide()
     $(".modal").hide()
-    $('.modal-background').remove()
 }
+
+function sanitiseInputs(){
+    // todo later
+
+}
+
+

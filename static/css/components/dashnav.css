@@ -1,4 +1,5 @@
 
+
 nav {
     text-align: right; 
     background-color: #183D3D;
@@ -56,18 +57,33 @@ button {
     transition: background-color 0.3s; 
     font-weight: bold;
 }
+.close-modal{
+    background-color: red;
+}
+
+dialog{
+
+    justify-content: center;
+    align-items: center;
+    border: none;
+    border-radius: 10px;
+}
 
 
 button:hover {
-    background-color: grey; 
     font-weight: bold;
 }
 
+.close-modal{
+    background-color: red;
+}
 .modal {
     z-index: 30;
     backdrop-filter: blur(3px); /* FIX */
     -webkit-backdrop-filter: blur(3px); 
+    
 }
+
 
 .modal-background{
     position: fixed;
@@ -78,4 +94,6 @@ button:hover {
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 12;
     display: none;
+    backdrop-filter: blur(3px); /* FIX */
+    -webkit-backdrop-filter: blur(3px); 
 }

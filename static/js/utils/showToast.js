@@ -1,6 +1,6 @@
 // no idea hwo to import this yet
 
-export default function showToast(message, type) {
+function showToast(message, type) {
     var toast = $('<div class="toast"></div>'); // create new div for toast
 
     if (type == "error") {

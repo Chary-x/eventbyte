@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 
 # model class imports
-from content.models import db, dbinit, User
+from content.models import db, dbinit, User, Event
 
 load_dotenv()
 app = Flask(__name__)
@@ -202,6 +202,8 @@ def login():
          flash("An error occurred. Please try again later.", "error")
          return redirect(url_for('login'))  # redirect to the login route
 
+
+
 def userInSession() -> Optional[User]:
    user_id = session.get('user_id')
    if user_id is None:
@@ -257,6 +259,32 @@ def upcoming_events():
    pass
 
 
-@app.route('/events/create', methods=['GET','POST'])
+@app.route('/events/create', methods=['POST'])
 def create():
-   pass
+   name = request.form['name']
+   date = request.form['date']
+   start_time = request.form['start_time']
+   duration= request.form['duration']
+   capacity = request.form['capacity']
+   location = request.form['location']
+   
+   try:
+      event = Event(
+         name=name,
+         date=date,
+         start_time=start_time,
+         duration=duration,
+         capacity=capacity,
+         location=location,
+      )
+      db.session.add(event)
+      db.session.commit()
+   except Exception as e:
+      flash("An error occured whilst trying to create an event", "error")
+      print("Error occured trying to create a new event and adding it to the database")
+      return redirect(url_for('dashboard'))
+   
+   flash("Event Was Succesfully Created", "success")
+   print("Event created")
+
+   return redirect(url_for('dashboard'))
