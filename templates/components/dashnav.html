@@ -1,3 +1,24 @@
+<script src="/static/js/utils/modal.js"></script>
+<link rel="stylesheet" href="/static/css/components/dashnav.css" type="text/css">
+<link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
 <nav>
-    
+    <ul>  
+        <li><a href="/dashboard"> Dashboard </a></li>  
+        <li><button class="create-event">Create Event</button>
+        <li><a href="/auth/logout">Log Out</a></li>
+    </ul>
 </nav>
+
+
+<dialog class="modal">
+    <form>
+        <fieldset>
+            <label>
+                Modal
+            </label>
+        </fieldset>
+        <button class="close-modal">Close</button>
+    </form>
+</dialog>
+
+<div class="modal-background"></div>

@@ -59,6 +59,21 @@ class SuperUser(db.Model):
     def __init__(self, user_id):
         self.user_id = user_id
 
+
+
+class Event(db.Model):
+    __tablename__ = 'event'
+    id = db.Column(db.Integer, primary_key = True)
+    name = db.Column(db.Text())
+    date = db.Column(db.Date)   # 1-1 with html type="date"
+    start_time = db.Column(db.Time)
+    end_time = db.Column(db.Time)
+
+
+
+
+
+
 def addDummyData():
     user_list = [
         User(

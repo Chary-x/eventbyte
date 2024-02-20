@@ -4,6 +4,7 @@ import pickle
 from flask_mail import Mail, Message
 from flask import Flask,session, flash, render_template, request, jsonify, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
+from typing import Optional
 # database imports
 
 # sec imports
@@ -201,7 +202,17 @@ def login():
          flash("An error occurred. Please try again later.", "error")
          return redirect(url_for('login'))  # redirect to the login route
 
-
+def userInSession() -> Optional[User]:
+   user_id = session.get('user_id')
+   if user_id is None:
+      return None  # no user id in the session
+   try:
+      user = User.query.filter_by(id=user_id).first()
+      return user
+   except Exception as e:
+      print("Error retrieving user object after login, no user with this user id")
+      return None
+   
 # todo -> login and forgot password
 @app.route('/auth/forgot-password')
 def forgot_password():
@@ -211,9 +222,16 @@ def forgot_password():
 # dashboard routes
 @app.route('/dashboard')
 def dashboard():
-   return render_template('pages/dashboard.html')
-
+   return render_template('pages/dashboard.html') 
 """
+   if userInSession() is not None:
+      return render_template('/pages/dashboard.html', user = user)
+   else:
+      flash("Error retrieving your details", "error")
+      return redirect(url_for('login))
+
+
+
    user_id = session.get('user_id') # key exception with []
    if user_id is None:
       flash("You must log in to access the dashboard (tut tut)", "error")
@@ -230,3 +248,15 @@ def dashboard():
    # pass user object to jinja thingy
    return render_template('/pages/dashboard.html', user = user)
 """
+
+# events
+
+
+@app.route('/events/upcoming')
+def upcoming_events():
+   pass
+
+
+@app.route('/events/create', methods=['GET','POST'])
+def create():
+   pass

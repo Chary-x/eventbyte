@@ -1,17 +1,32 @@
-{% extends 'components/base_dashboard.html' %}
+{% extends 'components/base.html' %}
 
+{% block title %} EventeByte - Dashboard {% endblock %}
 {% block css %}
+<link rel="stylesheet" href="/static/css/pages/dashboard.css" type="text/css">
 <link rel="stylesheet" href="/static/css/components/sidebar.css" type="text/css">
 {% endblock %}
 
 {% block js %}
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+{% endblock %}
+
+<!-- dashnav navabr instead of default navbar-->
+{% block navbar %}
+    {% include "components/dashnav.html" %}
 {% endblock %}
 
 {% block content %}
-<body>
-    <div class="sidebar-container">
-        {% include "components/sidebar.html" %} 
-    </div>
+<body> 
+    <main>
+        <div class="sidebar-container">
+            {% include "components/sidebar.html" %}
+        </div>
+        <section>
+            <h1> i have no idea what to add here</h1>
+        </section>
+    </main>
 
+<!-- after coursework, make it rlly fancy, instead of sidebar , have components on teh page of each-->
 </body>
+
 {% endblock %}
