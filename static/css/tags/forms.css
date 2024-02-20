@@ -1,37 +1,32 @@
-
-
 .form-container{
     display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     justify-content: center; 
     align-self: center;
-    margin-top: 10rem;
     font-family: WF Visual Sans, sans-serif;
     font-weight: bold;
     flex-grow: 1;
+    max-width: 600
 
 }
 
-.navbar{
-    flex-grow: 1;
-
-}
-
-fieldset {
+fieldset{
     border: None;
+    text-decoration-color: green;
+    max-width: 9;
 }
 form {
-    max-width: 450px;
+    max-width: 700px;
     position: relative;
     background: #ffffff;
-    padding: 50px 100px 70px;
+    padding: 50px 120px 70px;
     text-align: center;
     border-radius: 25px;
 }
 
 form h1 {
     font-size: 30px;
-    margin-bottom: 60px;
+    margin-bottom: 30px;
     color: black;
     position: relative;
 }
@@ -49,9 +44,10 @@ input, select, option {
     background: transparent;
     border: None;
     outline: 0;
-    padding: 18px 15px;
+    padding: 25px 15px;
     font-family: sans-serif;
-    font-weight: bold;
+    font-weight: bold;;
+
 }
 
 button {
@@ -62,8 +58,14 @@ button {
     border: None;
     cursor: pointer; 
     transition: background-color 0.3s; 
+    font-weight: bold;
 }
+
 
 button:hover {
     background-color: grey; 
+    font-weight: bold;
 }
+
+
+

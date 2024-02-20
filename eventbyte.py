@@ -25,6 +25,7 @@ app = Flask(__name__)
 app.config['MAIL_SUPPRESS_SEND'] = True
 app.config['MAIL_USE_TLS'] = False 
 app.config['MAIL_DEFAULT_SENDER'] = 'no-reply@warwick.ac.uk'
+
 """
 app.config['MAIL_SUPPRESS_SEND'] = False  
 app.config['MAIL_USE_TLS'] = True  
@@ -75,16 +76,13 @@ def index():
 
 # auth routes
 
-@app.route('/auth/login')
-def login():
-   return render_template('pages/auth/login.html')
 
-@app.route('/auth/register')
-def register():
-   return render_template('pages/auth/register.html')
 
-@app.route('/auth/register-user', methods=['POST'])
-def register_user():
+@app.route('/auth/register', methods=['POST','GET'])
+def register(): 
+   if request.method == 'GET':
+      return render_template('pages/auth/register.html')
+
    if request.method == 'POST':
       email = request.form['email'].lower() # get email from form
       ## check if email already exists
@@ -92,7 +90,7 @@ def register_user():
          flash("Email already exists","error")
          return redirect(url_for('register'))
       else:
-
+         # extract payload 
          forename = request.form['forename']
          surname = request.form['surname']
          # hash password again with bcrypt
@@ -103,13 +101,13 @@ def register_user():
             email=email,
             forename=forename,
             surname = surname,
-            passwordHash= generate_password_hash(password)
+            passwordHash= generate_password_hash(password, salt_length=10)
          )
          
          db.session.add(user)
          db.session.commit()
 
-          # generate token
+         # generate token
          token = User.generate_verification_token(email) 
          session['auth_token'] = token
 
@@ -122,9 +120,11 @@ def register_user():
             print("\nError details : "  + str(e))
             return redirect(url_for('register'))
          
+         # send visual feedback
          flash('Email confirmation sent', 'success')
 
-         return redirect(url_for('register'))
+         # redirect to login
+         return redirect(url_for('login'))
 
 def send_verification_email(email: str, token: str):
    link = f"{BASE_URL}{url_for('verify_email', email=email, token=token)}"
@@ -146,6 +146,7 @@ def verify_email(token):
       token_data = pickle.loads(token)
       email = token_data.get('email')
       user = User.query.filter_by(email=email).first()
+
       if user and user.verify_token(token_data):
          # update user email and verification bool
          user.emailVerified = True
@@ -163,7 +164,69 @@ def verify_email(token):
    return redirect(url_for('login')) # redirect to login
 
 
+@app.route('/auth/login', methods=['GET', 'POST'])
+def login():
+   if request.method == 'GET':
+      return render_template('/pages/auth/login.html')
+
+   if request.method == 'POST':
+      # extract payload, should be sanitised from frontend
+      email = request.form['email']
+      password = request.form['password']
+      try:
+
+         user = User.query.filter_by(email=email).first()
+         
+         if not user:
+            flash('This email does not exist', 'error')
+            return redirect(url_for('login'))  # redirectto the login route
+
+         if not user.emailVerified:
+            flash("You must verify your email before logging in", "error")
+            return redirect(url_for('login'))
+         
+         if check_password_hash(user.passwordHash, password):
+            flash("Successful Login", "success")
+            print("Succesful Login")
+            # Store the user id in session... TODO : create a more secure method, like tokenising again
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard'))  # redirect to the dashboard route
+         else:
+               flash("Your password is incorrect, please try again", "error")
+               return redirect(url_for('login'))  # redirect to login
+
+      except Exception as e:
+         print("Error searching for user by email after login post req ")
+         print(e)
+         flash("An error occurred. Please try again later.", "error")
+         return redirect(url_for('login'))  # redirect to the login route
+
+
 # todo -> login and forgot password
 @app.route('/auth/forgot-password')
 def forgot_password():
    pass
+
+
+# dashboard routes
+@app.route('/dashboard')
+def dashboard():
+   return render_template('pages/dashboard.html')
+
+"""
+   user_id = session.get('user_id') # key exception with []
+   if user_id is None:
+      flash("You must log in to access the dashboard (tut tut)", "error")
+      return redirect(url_for('login'))
+   
+   # retrieve user object
+   try:
+      user = User.query.filter_by(id = user_id).first()
+   except Exception as e:
+      print("Error retrieving user object after login, no user with this user id")
+      flash("Error retrieving your details", "error")
+      return redirect(url_for('login'))
+   
+   # pass user object to jinja thingy
+   return render_template('/pages/dashboard.html', user = user)
+"""

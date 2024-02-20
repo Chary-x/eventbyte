@@ -5,26 +5,20 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/css/pages/base_styles.css" type="text/css">
-    <link rel="stylesheet" href="/static/css/components/navbar.css" type="text/css">
     <title>{% block title %}EventByte{% endblock %}</title>
 
     {% block css %}{% endblock %}
 
 </head>
 <body>
-
-    <!-- Navbar is present on most pages so i decided to stick within base file instead of adding on every page-->
     {% block js %}
     {% endblock %}
-    
-    <nav>
-        {% include "components/navbar.html" %}
-    </nav>
-    
+
+    <div class="sidebar-container">
+        {% include "components/sidebar.html" %} 
+    </div>
 
     {% block content %}
-    
-    
     
     {% endblock %}
 

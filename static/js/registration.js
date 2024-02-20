@@ -1,11 +1,12 @@
+
 $(document).ready(function (){
 
     $("#register-form").submit(function(e){
 
-        e.preventDefault();
+        e.preventDefault()
         
         if (sanitiseInputs()) {
-            this.submit();
+            this.submit()
         }
     });
 });
@@ -17,9 +18,8 @@ function sanitiseInputs() {
     return true;
 }
 
-
 function showToast(message, type) {
-    var toast = $('<div class="toast"></div>'); // create new div for toast
+    var toast = $('<div class="toast"></div>') // create new div for toast
 
     if (type == "error") {
         toast.addClass("error")
@@ -34,24 +34,25 @@ function showToast(message, type) {
     toast.fadeIn(400).delay(3000).fadeOut(400);
 }
 
+
 function checkNames() {
     var forename = $("#register-form input[name='forename']").val()
     var surname = $("#register-form input[name='surname']").val()
 
     if (!forename.trim()){
-        showToast("Please enter a valid forename");
+        showToast("Please enter a valid forename")
         return false;
     }
     
     if (!surname.trim()){
-        showToast("Please enter a valid surname");
+        showToast("Please enter a valid surname")
         return false;
     }
     return true;
 }
 
 function checkPassword() {
-    var password = $("#register-form input[name='password']").val();
+    var password = $("#register-form input[name='password']").val()
     var confirmPassword = $("#register-form input[name='confirm-password']").val()
 
     if (password != confirmPassword){
@@ -60,12 +61,14 @@ function checkPassword() {
     }
     
     if (password.length < 8) {
-        showToast("Password must be at least 8 characters long", "error");
-        return false;
+        showToast("Password must be at least 8 characters long", "error")
+        return false
     }
 
-    return true;
+    return true
 }
+
+
 
 
 

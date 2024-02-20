@@ -1,0 +1,17 @@
+{% extends 'components/base_dashboard.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="/static/css/components/sidebar.css" type="text/css">
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block content %}
+<body>
+    <div class="sidebar-container">
+        {% include "components/sidebar.html" %} 
+    </div>
+
+</body>
+{% endblock %}

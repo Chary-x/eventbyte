@@ -1,15 +1,30 @@
-{% include 'components/base.html' %} 
+{% extends 'components/base.html' %} 
 {% block css %}
+<link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
 <link rel="stylesheet" href="/static/css/pages/auth/login.css" type="text/css">
 {% endblock %}
+{% block js %}
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/login.js"></script>
+{% endblock js %}
 {% block content %}
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                showToast("{{ message }}", "{{ category }}");
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="page-container">
-        <form class="form-container">
+        <form id="login-form" class="form-container" action="/auth/login" method="post">
             <h1>Login</h1>
             <fieldset>
                 <label>
                     <input 
+                        name="email"
                         type="email"
                         placeholder="Enter Your Email"
                     >
@@ -17,14 +32,14 @@
 
                 <label>
                     <input
+                        name="password"
                         type="password"
                         placeholder="Enter Your Password"
                     >
                 </label>
-            <fieldset>
+            </fieldset>
             <button type ="submit">Login</button>
-            <p><a href="/forgot-password">Forgot Password?</a></p>
-
+            <p><a id="forgotten-pw" href="/forgot-password">Forgot Password?</a></p>
         </form>
     </div>
 

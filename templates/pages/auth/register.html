@@ -1,5 +1,6 @@
-{% include 'components/base.html' %} 
+{% extends 'components/base.html' %} 
 {% block css %}
+<link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
 <link rel="stylesheet" href="/static/css/pages/auth/register.css" type="text/css">
 
 {% endblock %}
@@ -21,7 +22,7 @@
     {% endwith %}
                 
     <div class="page-container">
-        <form id="register-form" class="form-container" action="/auth/register-user" method="POST" onsubmit="registerUser()">
+        <form id="register-form" class="form-container" action="/auth/register" method="POST">
             <h1>Registration</h1>
             <fieldset>
                 <legend>Personal Information</legend>
