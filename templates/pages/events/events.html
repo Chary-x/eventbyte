@@ -1,0 +1,50 @@
+{% extends 'components/base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="/static/css/components/event_card.css" type="text/css">
+<link rel="stylesheet" href="/static/css/pages/events.css" type="text/css">
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/events.js"></script>
+
+{% endblock %}
+
+{% block navbar %}
+    {% include 'components/dashnav.html' %}
+{% endblock %}
+
+{% block content %}
+
+<main>
+    <h1 id="all-events"> All Events </h1>
+    <section class ="events">
+        {% for event in allEvents %}  
+            <div id ="{{ event.id }}" class="event-container">
+                <div class="event-content">
+                    <div class="event-header">
+                        <h2 class="event-name">{{ event.name }}</h2>
+                        <div class="buttons">
+                            <button class="edit" type="submit">Edit</button> <!-- add Book to go to tcikets for attendees-->
+                            <button class="logs" type="submit">Logs</button>
+                            <button class="cancel" type="submit">Cancel</button>
+                        </div>
+
+                    </div>
+                    <div class="event-details">
+                        <p> {{ event.start_time }} </p> <!-- add some icons here-->
+                        <p> {{ event.date }} </p>
+                        <p> {{ event.duration }}</p>
+                        <p> {{ event.location }} </p>
+                    </div>
+                    <div class="event-description">
+                        {{ event.description }}
+                    </div>                
+                </div>
+            </div>  
+        {% endfor %}    
+    </section>
+</main>
+{% endblock %}

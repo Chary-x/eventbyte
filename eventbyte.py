@@ -5,6 +5,7 @@ from flask_mail import Mail, Message
 from flask import Flask,session, flash, render_template, request, jsonify, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from typing import Optional
+from datetime import datetime
 # database imports
 
 # sec imports
@@ -259,32 +260,100 @@ def upcoming_events():
    pass
 
 
-@app.route('/events/create', methods=['POST'])
-def create():
-   name = request.form['name']
-   date = request.form['date']
-   start_time = request.form['start_time']
-   duration= request.form['duration']
-   capacity = request.form['capacity']
-   location = request.form['location']
-   
-   try:
-      event = Event(
-         name=name,
-         date=date,
-         start_time=start_time,
-         duration=duration,
-         capacity=capacity,
-         location=location,
-      )
-      db.session.add(event)
-      db.session.commit()
-   except Exception as e:
-      flash("An error occured whilst trying to create an event", "error")
-      print("Error occured trying to create a new event and adding it to the database")
-      return redirect(url_for('dashboard'))
-   
-   flash("Event Was Succesfully Created", "success")
-   print("Event created")
+@app.route('/events/create', methods=['GET','POST'])
+def create_event():
+   if request.method == 'GET':
+      ## check if user is superuser
+      return render_template('pages/events/create-event.html')
+   if request.method == 'POST':
+      name = request.form['name']
+      description = request.form['description']
+      date = request.form['date']
+      start_time = request.form['start_time']
+      duration= request.form['duration']
+      capacity = request.form['capacity']
+      location = request.form['location']
+      
 
-   return redirect(url_for('dashboard'))
+      try:
+         event = Event(
+            name=name,
+            date=datetime.strptime(date,'%Y-%m-%d').date(), # db.Date only accepts date type
+            description=description,
+            start_time=datetime.strptime(start_time, '%H:%M').time(), # db.Time only accepts time objects
+            duration=datetime.strptime(duration, '%H:%M').time(), # db.Time only accepts time objects
+            capacity=capacity, 
+            location=location,
+         )
+         db.session.add(event)
+         db.session.commit()
+
+
+      except Exception as e:
+         flash("An error occured whilst trying to create an event", "error")
+         print("Error occured trying to create a new event and adding it to the database")
+         print(e)
+         return redirect(url_for('create_event'))
+      
+      flash("Event Was Succesfully Created", "success")
+      print("Event created")
+
+      return redirect(url_for('create_event'))
+   
+
+@app.route('/events/all')
+def all_events():
+   allEvents = Event.query.all()
+   return render_template('/pages/events/events.html', allEvents = allEvents)
+
+
+@app.route('/events/edit/<int:event_id>', methods=['GET','POST'])
+# ADDITIONAL FEATURE 
+def edit_event(event_id):
+   # check if user is superuser, if not, then redirect back to wherever, they shouldnt
+   # be able to access this though
+   if request.method == 'GET':
+      
+      try:
+         event = Event.query.get(event_id)
+      except Exception as e:
+         print(e)
+         print(f"Erorr occured trying to get details for event {event_id}")
+         flash("Error fetching event details", "error")
+         return redirect(url_for('all_events'))
+      
+      if event is None:
+         print("Event does not exist")
+         flash("This event doesn't exist", "error")
+      else:
+         # pass event into edit 
+         return render_template('/pages/events/edit-event.html', 
+                                event=event
+                                )
+
+   if request.method == 'POST':
+      # DISPLAY necessary fields to edit...
+      pass
+
+
+@app.route('/events/cancel/<int:event_id>', methods =['POST'])
+def cancel_event(event_id):
+   try:
+      event = Event.query.get(event_id)
+   except Exception as e:
+      print(e)
+      print(f"Erorr occured trying to get details for event {event_id}")
+      flash("Error fetching event details", "error")
+      return redirect(url_for('all_events'))
+   
+   if event is None:
+      print(f"Event does not exist {event_id}")
+      flash("This event doesn't exist", "error")
+   else:
+      # cancel the event
+      event.cancelled = True
+      db.session.commit()
+
+      flash(f"{event.name} has been cancelled", "success")
+      return redirect(url_for('all_events'))
+

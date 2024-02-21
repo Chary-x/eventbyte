@@ -27,12 +27,20 @@ function showToast(message, type) {
 }
 
 function sanitiseInputs(){
-    if (checkPassword()){ //  can add in future checks here if needed
+    if (checkEmail() && checkPassword()){ //  can add in future checks here if needed
         return true
     } else {
         return false
     }
 
+}
+
+function checkEmail() {
+    var email = $("#login-form input[name='email']").val()
+    if (!email.trim()){
+        showToast("Email can't be emmpty", "error")
+        return false
+    }
 }
 function checkPassword() {
     var password = $("#login-form input[name='password']").val();

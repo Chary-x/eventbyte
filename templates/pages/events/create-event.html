@@ -1,0 +1,110 @@
+{% extends 'components/base.html' %}
+
+{% block navbar %}
+    {% include 'components/dashnav.html' %}
+{% endblock %}
+
+{% block js %}
+    <script src="/static/js/utils/showToast.js"></script>
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+{% endblock %}
+{% block css %}
+    <link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/pages/create_events.css" type="text/css">
+{% endblock %}
+
+{% block content %}
+<main>
+    <!-- generate toast for redirecting flashes -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                showToast("{{ message }}", "{{ category }}");
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+            
+    <div class="form-container">
+        <form action="/events/create" method="post">
+            <h1> Create Event </h1>
+            <fieldset>
+
+                <label>
+                    <input
+                        name="name"
+                        type="text"
+                        placeholder="Enter Title"
+                    />
+                </label>   
+
+                <label>
+                    <input 
+                        name="date"
+                        type="text"
+                        placeholder="Event Date"
+                        onfocus="(this.type='date')"
+                        onblur="(this.type='text')"
+                        min="2024-01-01"
+                        max="2027-01-01"
+     
+                    /> <!-- I struggled with showing the placeholder with type="date", so I found this solution
+                            in 
+                            https://stackoverflow.com/questions/20321202/not-showing-placeholder-for-input-type-date-field
+                         Included min and max as datetime objects from server so users can't make
+                         events in the past
+                        
+                        -->
+                </label>
+
+
+                <label>
+                    <textarea
+                        name="description"
+                        type="textarea"
+                        placeholder="Enter Description"
+                    ></textarea>
+                </label>
+
+                <label>
+                    <input 
+                        name="start_time"
+                        type="text"
+                        placeholder="Start Time"
+                        onfocus="(this.type='time')"
+                        onblur="(this.type='text')"
+                    />
+                </label>
+
+                <label>
+                    <input 
+                        name="duration"
+                        type="text"
+                        placeholder="Duration"
+                        onfocus="(this.type='time')"
+                        onblur="(this.type='text')"
+                    />
+                </label>
+
+                <label>
+                    <input  
+                        name="capacity"
+                        type="text"
+                        placeholder="Capacity"
+                    />
+                </label>
+
+                <label>
+                    <input  
+                        name="location"
+                        type="text"
+                        placeholder="Location"
+                    />
+                </label>   
+            </fieldset>         
+            <button class="submit" type="submit">Create</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

@@ -1,4 +1,8 @@
 
+// used a modal for creating event, but got rid of it because
+// I couldnt redirect to where the user came from
+
+/*
 $(document).ready(function(){
     $(".create-event").click(function(e){
         showModal();
@@ -32,3 +36,4 @@ function sanitiseInputs(){
 }
 
 
+*/

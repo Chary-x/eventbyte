@@ -65,15 +65,23 @@ class Event(db.Model):
     __tablename__ = 'event'
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.Text())
+    description = db.Column(db.Text())
     date = db.Column(db.Date)   # 1-1 with html type="date"
     start_time = db.Column(db.Time)
     duration = db.Column(db.Time)
     capacity = db.Column(db.Integer)
     location = db.Column(db.Text())
+    cancelled = db.Column(db.Boolean, default=False)
 
 
-
-
+    def __init__(self, name, description, date, start_time, duration, capacity, location):
+        self.name = name 
+        self.description = description
+        self.date = date 
+        self.start_time = start_time
+        self.duration = duration
+        self.capacity = capacity
+        self.location = location
 
 def addDummyData():
     user_list = [
@@ -86,8 +94,27 @@ def addDummyData():
     db.session.add_all(user_list)
     db.session.commit()
     
+    today_date= datetime.now().date()
+    today_time = datetime.now().time()
+
+    event_list = [
+        Event(
+            name="Pop",
+            date=datetime.strptime("2024-02-21", "%Y-%m-%d").date(),  # Set the date to today's date, for example
+            description="party with friends",
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
+            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
+            capacity=100,  # Example capacity
+            location="Somewhere"  # Example location
+        )
+    ]
+
+    db.session.add_all(event_list)
+    db.session.commit()
+
+
     # Check if SuperUser exists
-    super_user = SuperUser.query.first()
+    super_user = SuperUser.query.first()    
     if super_user is None:
         # If SuperUser does not exist, create one
         super_user = SuperUser(user_id=user_list[0].id)  # Assuming the first user is the superuser

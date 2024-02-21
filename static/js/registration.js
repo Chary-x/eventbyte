@@ -12,7 +12,7 @@ $(document).ready(function (){
 });
 
 function sanitiseInputs() {
-    if (!(checkNames() && checkPassword())) {
+    if (!(checkFields() && checkPassword())) {
         return false;
     }
     return true;
@@ -35,17 +35,22 @@ function showToast(message, type) {
 }
 
 
-function checkNames() {
+function checkFields() {
     var forename = $("#register-form input[name='forename']").val()
     var surname = $("#register-form input[name='surname']").val()
+    var email = $("#register-form input[name='email']").val()
 
+    if (!email.trim()){
+        showToast("Please enter a valid email", "error")
+        return false;
+    }
     if (!forename.trim()){
-        showToast("Please enter a valid forename")
+        showToast("Please enter a valid forename", "error")
         return false;
     }
     
     if (!surname.trim()){
-        showToast("Please enter a valid surname")
+        showToast("Please enter a valid surname", "error")
         return false;
     }
     return true;
