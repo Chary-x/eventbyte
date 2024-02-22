@@ -1,0 +1,15 @@
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.update:hover{
+    background-color: green;
+}
+
+input{
+    text-align: center;
+    font-size: 1rem;
+}

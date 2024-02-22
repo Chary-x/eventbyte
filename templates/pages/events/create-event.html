@@ -4,28 +4,14 @@
     {% include 'components/dashnav.html' %}
 {% endblock %}
 
-{% block js %}
-    <script src="/static/js/utils/showToast.js"></script>
-    <script src="/static/js/jquery-3.7.1.min.js"></script>
-{% endblock %}
+
 {% block css %}
     <link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
     <link rel="stylesheet" href="/static/css/pages/create_events.css" type="text/css">
 {% endblock %}
 
 {% block content %}
-<main>
-    <!-- generate toast for redirecting flashes -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <script>
-                showToast("{{ message }}", "{{ category }}");
-                </script>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-            
+<main class="page-container">    
     <div class="form-container">
         <form action="/events/create" method="post">
             <h1> Create Event </h1>

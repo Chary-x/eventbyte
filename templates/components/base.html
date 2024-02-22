@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/static/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/showToast.js"></script>
     <link rel="stylesheet" href="/static/css/pages/base_styles.css" type="text/css">
     <title>{% block title %}EventByte{% endblock %}</title>
 
@@ -11,6 +13,16 @@
 
 </head>
 <body>
+     <!-- generate toast for redirecting flashes -->
+     {% with messages = get_flashed_messages(with_categories=true) %}
+     {% if messages %}
+         {% for category, message in messages %}
+             <script>
+             showToast("{{ message }}", "{{ category }}");
+             </script>
+         {% endfor %}
+     {% endif %}
+    {% endwith %}
 
     <!-- Navbar is present on most pages so i decided to stick within base file instead of adding on every page-->
     {% block js %}

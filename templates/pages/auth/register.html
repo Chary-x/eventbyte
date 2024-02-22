@@ -4,22 +4,10 @@
 <link rel="stylesheet" href="/static/css/pages/auth/register.css" type="text/css">
 {% endblock %}
 {% block js %}
-<script src="/static/js/jquery-3.7.1.min.js"></script>
 <script src="/static/js/registration.js"></script>
 {% endblock %}
 {% block content %}
 <body>  
-    <!-- generate toast for redirecting flashes -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <script>
-                showToast("{{ message }}", "{{ category }}");
-                </script>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-                
     <div class="page-container">
         <form id="register-form" class="form-container" action="/auth/register" method="POST">
             <h1>Registration</h1>

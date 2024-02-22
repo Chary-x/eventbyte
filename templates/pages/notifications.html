@@ -1,0 +1,41 @@
+{% extends 'components/base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="/static/css/components/card.css" type="text/css">
+<link rel="stylesheet" href="/static/css/pages/notifications.css" type="text/css">
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/notifications.js"></script>
+{% endblock %}
+
+{% block navbar %}
+    {% include 'components/dashnav.html' %}
+{% endblock %}
+
+{% block content %}
+<main>
+    <h1 id="all-notifications"> All Notifications </h1>
+    <section class="notifications">
+        {% for notification in notifications %}  
+            <div id="{{ notification.id }}" class="card-container">
+                <div class="card-content">
+                    <div class="card-header">
+                        <h2 class="card-name">{{ notification.title }}</h2>
+                        <div class="buttons">
+                            <button class="delete" type="submit">Delete</button> 
+                        </div>
+                    </div>
+
+                    <div class="card-description">
+                        <p>{{ notification.description }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <p>{{ notification.format_sent_at() }}</p>
+                    </div>
+                </div>
+            </div>  
+        {% endfor %}    
+    </section>
+</main>
+{% endblock %}

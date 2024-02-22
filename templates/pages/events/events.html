@@ -1,15 +1,13 @@
 {% extends 'components/base.html' %}
 
 {% block css %}
-<link rel="stylesheet" href="/static/css/components/event_card.css" type="text/css">
+<link rel="stylesheet" href="/static/css/components/card.css" type="text/css">
 <link rel="stylesheet" href="/static/css/pages/events.css" type="text/css">
 
 {% endblock %}
 
 {% block js %}
-<script src="/static/js/jquery-3.7.1.min.js"></script>
 <script src="/static/js/events.js"></script>
-
 {% endblock %}
 
 {% block navbar %}
@@ -19,27 +17,66 @@
 {% block content %}
 
 <main>
+    <!-- set permission flags -->
+    {% set superuser = isSuperUser(current_user) %}
+    {% set attendee = isAttendee(current_user) %}
+    {% set public = not (superuser or attendee) %}
+
+    {{ superuser }}
+    {{ attendee }} 
+    {{ public }}
+
     <h1 id="all-events"> All Events </h1>
     <section class ="events">
         {% for event in allEvents %}  
-            <div id ="{{ event.id }}" class="event-container">
-                <div class="event-content">
-                    <div class="event-header">
-                        <h2 class="event-name">{{ event.name }}</h2>
+            {% set full = event.tickets_allocated == event.capacity %}
+            {% set tickets_remaining = event.capacity - event.tickets_allocated %}
+            <div id ="{{ event.id }}" class="card-container {% if event.cancelled %}cancelled{% endif %}">
+                <div class="card-content">
+                    <div class="card-header">
+                        <h2 class="card-name">{{ event.name }}</h2>
                         <div class="buttons">
-                            <button class="edit" type="submit">Edit</button> <!-- add Book to go to tcikets for attendees-->
-                            <button class="logs" type="submit">Logs</button>
-                            <button class="cancel" type="submit">Cancel</button>
+                            <!-- only superusers can edit and cancel events -->
+                            {% if superuser %}
+                                {% if not event.cancelled and not full %}
+                                    <button class="edit" type="submit">Edit</button> <!-- add Book to go to tcikets for attendees-->
+                                {% endif %}
+
+                                {% if not event.cancelled %}
+                                    <button class="delete" type="submit">Cancel</button>
+                                {% endif %}
+                            
+                            {% endif %}
+
+                            
                         </div>
 
                     </div>
-                    <div class="event-details">
-                        <p> {{ event.start_time }} </p> <!-- add some icons here-->
-                        <p> {{ event.date }} </p>
-                        <p> {{ event.duration }}</p>
-                        <p> {{ event.location }} </p>
+                    <div class="card-details">
+                        <p> Date : {{ event.format_date() }} </p>
+                        <p> Starts At : {{ event.format_start_time() }} </p> <!-- add some icons here-->
+                        <p> Duration : {{ event.format_duration() }}</p>
+                        <p> Location : {{ event.location }} </p>
+
+                        {% if superuser %}
+                            <p> Capacity : {{ event.capacity }} </p>
+                        {% endif %}
+
+                        {% if full %}
+                            <p><strong>FULL!</strong></p>
+                        {% elif attendee and not public %}
+                            {% if tickets_remaining == 1 %}
+                                <p> Last Ticket!</p>                   
+                            {% elif tickets_remaining <= (event.capacity * 0.05) %}
+                                <p> Last {{ tickets_remaining }} spaces! </p>
+                            {% endif %}
+                            <!-- TODO create ticket functionality -->
+                            <button class="book-ticket" type="submit">Book Ticket</button>
+                        {% endif %}
+
+
                     </div>
-                    <div class="event-description">
+                    <div class="card-description">
                         {{ event.description }}
                     </div>                
                 </div>

@@ -4,3 +4,24 @@
     flex-direction: column;
     align-items: center;
 }
+
+
+#all-events{
+    justify-self: center;
+    align-self: center;
+}
+
+.book-ticket{
+    margin: auto 0px;
+    margin-left: auto;
+}
+.book-ticket:hover{
+    background-color: green;
+    
+}
+
+strong{
+    color: red;
+    font-size: 20px;
+    margin-left: auto;
+}

@@ -6,10 +6,6 @@
 <link rel="stylesheet" href="/static/css/components/sidebar.css" type="text/css">
 {% endblock %}
 
-{% block js %}
-<script src="/static/js/jquery-3.7.1.min.js"></script>
-{% endblock %}
-
 <!-- dashnav navabr instead of default navbar-->
 
 {% block navbar %}
@@ -23,6 +19,7 @@
             {% include "components/sidebar.html" %}
         </div>
         <section>
+            <h1>Hello {{ forename }}</h1>
             <h1> i have no idea what to add here</h1>
         </section>
     </main>

@@ -1,9 +1,4 @@
-
-#all-events{
-    justify-self: center;
-    align-self: center;
-}
-.event-container {
+.card-container {
     background-color: white;
     border-radius: 6px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); 
@@ -12,12 +7,12 @@
     height: auto;
 }
 
-.event-header {
+.card-header {
     display: flex;
     flex-direction: row;
 }
 
-.event-header .buttons{
+.card-header .buttons{
     margin: auto 0px;
     margin-left: auto;
 
@@ -26,32 +21,44 @@
 .edit:hover{
     background-color: green;
 }
+/*
 .logs:hover{
     background-color: orange;
-}
-.cancel:hover{
+*/
+.delete:hover{
     background-color: red;
 }
 
-.event-content {
+.card-content {
     padding: 20px;
 }
 
-.event-name {
+.card-name {
     font-size: 24px;
     margin-bottom: 10px;
 }
 
-.event-details{
+.card-details{
     display: flex;
     flex-direction: row;
     gap: 2rem;
 }
-.event-details p {
+.card-details p {
     margin: 5px 0;
 }
 
-.event-description {
+.card-description {
     margin-top: 15px;
     color: #666; 
 }
+
+.cancelled{
+    background-color: red;
+    color: white    ;
+}
+
+.cancelled .card-description,
+.cancelled .card-name{
+    color: white;
+}
+

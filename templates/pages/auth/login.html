@@ -4,20 +4,10 @@
 <link rel="stylesheet" href="/static/css/pages/auth/login.css" type="text/css">
 {% endblock %}
 {% block js %}
-<script src="/static/js/jquery-3.7.1.min.js"></script>
 <script src="/static/js/login.js"></script>
 {% endblock js %}
 {% block content %}
 <body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <script>
-                showToast("{{ message }}", "{{ category }}");
-                </script>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
     <div class="page-container">
         <form id="login-form" class="form-container" action="/auth/login" method="post">
             <h1>Login</h1>

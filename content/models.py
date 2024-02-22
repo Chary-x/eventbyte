@@ -4,6 +4,8 @@ import pickle
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash
+from flask_login import UserMixin
 
 
 db = SQLAlchemy()
@@ -12,7 +14,7 @@ def dbinit():
     addDummyData()
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.Text(), unique=True)
@@ -25,7 +27,7 @@ class User(db.Model):
     verificationToken = db.Column(db.Text())
 
     superuser = db.relationship('SuperUser', back_populates='user')
-
+    notifications = db.relationship('Notification', back_populates='user')
 
      
     # Constructor
@@ -46,8 +48,10 @@ class User(db.Model):
         if email:
             return email == self.email
         return False
-    
 
+    def get_id(self):
+        return str(self.id)
+    
 class SuperUser(db.Model):
     __tablename__ = 'superuser'
     id = db.Column(db.Integer, primary_key = True)
@@ -60,7 +64,6 @@ class SuperUser(db.Model):
         self.user_id = user_id
 
 
-
 class Event(db.Model):
     __tablename__ = 'event'
     id = db.Column(db.Integer, primary_key = True)
@@ -70,11 +73,12 @@ class Event(db.Model):
     start_time = db.Column(db.Time)
     duration = db.Column(db.Time)
     capacity = db.Column(db.Integer)
+    tickets_allocated = db.Column(db.Integer, default=0)
     location = db.Column(db.Text())
     cancelled = db.Column(db.Boolean, default=False)
 
 
-    def __init__(self, name, description, date, start_time, duration, capacity, location):
+    def __init__(self, name, description, date, start_time, duration, capacity, location, tickets_allocated=0):
         self.name = name 
         self.description = description
         self.date = date 
@@ -82,15 +86,65 @@ class Event(db.Model):
         self.duration = duration
         self.capacity = capacity
         self.location = location
+        self.tickets_allocated = tickets_allocated
+
+    def format_date(self):
+      return self.date.strftime('%d/%m/%Y')
+
+    # string formatting, lstrip for leading 0's
+    def format_start_time(self):
+        return self.start_time.strftime('%H:%M')
+
+
+    def format_duration(self):
+        formatted_duration = self.duration.strftime('%-Hh:%Mm').lstrip('0')
+        if self.duration.minute == 0:
+            formatted_duration = formatted_duration[:-4]  
+        return formatted_duration
+
+
+class Notification(db.Model):
+    __tablename__ = "notification"
+    id = db.Column(db.Integer, primary_key=True)
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    title = db.Column(db.Text)
+    description = db.Column(db.Text)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    user = db.relationship('User', back_populates='notifications')
+
+    def __init__(self, title, description, user_id):
+        self.title = title
+        self.description = description
+        self.user_id = user_id
+
+    def format_sent_at(self):
+        return self.sent_at.strftime('%d/%m/%Y %H:%M')
+    
 
 def addDummyData():
     user_list = [
         User(
-            email="xxxxxxxxxxxxxxx@gmail.com",
-            forename="Ignatius",
-            surname="Boateng",
-            passwordHash="yapyapyap"), 
-    ]
+            email="ignatiusboateng123@gmail.com",
+            forename="ignatiusboateng123@gmail.com",
+            surname="ignatiusboateng123@gmail.com",
+            passwordHash=generate_password_hash("ignatiusboateng123@gmail.com", salt_length=10)    
+        ), 
+        User(
+            email="attendeetester123@gmail.com",
+            forename="attendeetester123@gmail.com",
+            surname="attendeetester123@gmail.com",
+            passwordHash=generate_password_hash("attendeetester123@gmail.com", salt_length=10)    
+        ),
+        User(
+            email="publictester123@gmail.com",
+            forename="publictester123@gmail.com",
+            surname="publictester123@gmail.com",
+            passwordHash=generate_password_hash("publictester123@gmail.com", salt_length=10) 
+        )]
+    # for attendee testing TODO remove
+    user_list[0].emailVerified = True
+    user_list[1].emailVerified = True
     db.session.add_all(user_list)
     db.session.commit()
     
@@ -100,12 +154,22 @@ def addDummyData():
     event_list = [
         Event(
             name="Pop",
-            date=datetime.strptime("2024-02-21", "%Y-%m-%d").date(),  # Set the date to today's date, for example
+            date=datetime.strptime("2024-02-21", "%Y-%m-%d"),  # Set the date to today's date, for example
             description="party with friends",
             start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
             duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
             capacity=100,  # Example capacity
             location="Somewhere"  # Example location
+        ),
+        Event(
+            name="Code Jam",
+            date=datetime.strptime("21/02/2024", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            description="Make games",
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
+            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
+            capacity=100,  # Example capacity
+            location="Somewhere", # Example location
+            tickets_allocated = 50
         )
     ]
 

@@ -9,23 +9,6 @@ $(document).ready(function (){
     });
 });
 
-
-function showToast(message, type) {
-    var toast = $('<div class="toast"></div>'); // create new div for toast
-
-    if (type == "error") {
-        toast.addClass("error")
-    } else if(type == "success") {
-        toast.addClass("success")
-    } else {
-        toast.addClass("message")
-    }
-
-    toast.text(message); 
-    toast.appendTo("body"); 
-    toast.fadeIn(400).delay(3000).fadeOut(400);
-}
-
 function sanitiseInputs(){
     if (checkEmail() && checkPassword()){ //  can add in future checks here if needed
         return true
@@ -36,12 +19,15 @@ function sanitiseInputs(){
 }
 
 function checkEmail() {
-    var email = $("#login-form input[name='email']").val()
-    if (!email.trim()){
-        showToast("Email can't be emmpty", "error")
-        return false
+    var email = $("#login-form input[name='email']").val();
+    if (!email.trim()) {
+        showToast("Email can't be empty", "error");
+        return false;
+    } else {
+        return true;
     }
 }
+
 function checkPassword() {
     var password = $("#login-form input[name='password']").val();
 

@@ -1,0 +1,47 @@
+{% extends 'components/base.html' %}
+
+{% block css %}
+<link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
+<link rel="stylesheet" href="/static/css/pages/events/edit-event.css" type="text/css">
+
+
+{% endblock %}
+
+{% block js %}
+<script src="/static/js/edit-events.js"></script>
+{% endblock %}
+
+{% block navbar %}
+    {% include 'components/dashnav.html' %}
+{% endblock %}
+
+{% block content %}
+
+<body>
+    <div class="page-container"> 
+        <div class="form-container">
+            <form id="edit-form" action="/events/edit/{{ event.id }}" method="post">
+                <h1> {{ event.name }} </h1>
+                <fieldset>
+                    <label>Current Capacity : {{ event.capacity }}
+                           Tickets Allocated :  {{ event.tickets_allocated }}
+                        <input 
+                            id="new_capacity"
+                            name="new_capacity"
+                            type="number"
+                            min="1"
+                            max="10000"
+                            placeholder="New Capacity"
+                            current_capacity = "{{ event.capacity }}"
+                            tickets_allocated = "{{ event.tickets_allocated }}"
+                        />
+                    </label>
+                </fieldset>         
+                <button class="update" type="submit">Update</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+
+{% endblock %}
