@@ -7,6 +7,11 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import check_password_hash, generate_password_hash
 from typing import Optional
 from datetime import datetime
+
+from barcode import EAN13
+from barcode.writer import ImageWriter
+from random import randint
+
 # database imports
 
 # sec imports
@@ -14,7 +19,7 @@ import os
 from dotenv import load_dotenv
 
 # model class imports
-from content.models import db, dbinit, User, Event,SuperUser, Notification
+from content.models import db, dbinit, User, Event,SuperUser, Notification, Ticket, Barcode
 
 load_dotenv()
 login_manager = LoginManager()
@@ -174,6 +179,22 @@ def verify_email(token):
       return redirect(url_for('register')) # redirect to register
 
 
+def send_notification(title, description, user_id):
+   try:
+      notification = Notification(
+               title=title,
+               description=description,
+               user_id = user_id
+            )
+      db.session.add(notification)
+      db.session.commit()
+      return True
+   except Exception as e:
+      print("Error occured trying to send a notification")
+      print(e)
+      return False
+   
+
 @app.route('/auth/login', methods=['GET', 'POST'])
 def login():
    if request.method == 'GET':
@@ -250,7 +271,7 @@ def getSuperUser():
 def logout():
    user = current_user
    super_user = getSuperUser()
-   if current_user.id == super_user.user_id:
+   if current_user.get_id() == super_user.user_id:
       send_notification(
          title="You Logged Out",
          description=f"You logged out!",
@@ -400,13 +421,22 @@ def create_event():
 @app.route('/events/all')
 def all_events():
    allEvents = Event.query.all()
-   #print(isAttendee(current_user))
-   return render_template('/pages/events/events.html', 
-                          allEvents = allEvents, 
-                          currente_user = current_user,
-                          isSuperUser = isSuperUser,
-                          isAttendee = isAttendee) # pass in superuserfunc
 
+   nonSuperUserEvents = Event.query.filter( 
+   Event.date > datetime.now(), # events in the future
+   Event.cancelled == False, # that aren't cancelled
+   ).all()
+   
+   if isSuperUser(current_user):
+       events = allEvents
+   else:
+       events = nonSuperUserEvents
+   
+   return render_template('/pages/events/events.html', 
+                          events=events, 
+                          current_user=current_user,
+                          isSuperUser=isSuperUser,
+                          isAttendee=isAttendee)
 
 
 @login_required       
@@ -447,7 +477,23 @@ def edit_event(event_id):
                flash("This event has already been filled up", "error")
                return redirect(url_for('all_events'))
             
+            # get old capacity for notifications sake
+            old_capacity= event.capacity
             event.capacity = new_capacity
+
+
+            change_type = "increased" if new_capacity > event.capacity else "decreased"
+
+            # send notifications to ticekt holders on the update in capacity
+            ## TODO , change for other attributes if i implement such
+            for ticket in event.tickets:
+               send_notification(
+                  title="Capacity Change",
+                  description=f"The capacity for Event {event.name} has been {change_type} from {old_capacity} to {new_capacity}",
+                  user_id=ticket.user_id
+               )
+                  
+
             db.session.commit()
             flash(f"{event.name}'s capacity updated to {new_capacity}", "success")
 
@@ -479,21 +525,26 @@ def cancel_event(event_id):
       flash("This event doesn't exist", "error")
       return redirect(url_for('all_events'))
    else:
+      
+      # cancel the event
+      event.cancelled = True
 
-
+      # send notification to 
       send_notification(
          title="Event Cancelled",
          description= f"Event {event.name} was cancelled",
          user_id= current_user.get_id()
       )
-
-      ##TODO  map over the users who have a ticket for this evnet, sending them a notlif
-
-      # cancel the event
-      event.cancelled = True
-
-      # send notlification
-      ## TODO SEND EMAIL TO ALL ATTENDEES WITH A TICEKT FOR THIS EVENT SAYING ITS CANCELLED
+      
+      # send cancellation notificaiton to every user who has a ticket for this event
+      for ticket in event.tickets:
+         send_notification(
+         title="Event Cancelled",
+         description=f"Event {event.name} was cancelled",
+         user_id=ticket.user.id
+         )
+      
+      # send notlifications
       db.session.commit()
 
       flash(f"{event.name} has been cancelled", "success")
@@ -518,23 +569,91 @@ def notifications():
          return redirect(url_for('all_events'))
 
 
-
-def send_notification(title, description, user_id):
-   try:
-      notification = Notification(
-               title=title,
-               description=description,
-               user_id = user_id
-            )
-      db.session.add(notification)
-      db.session.commit()
-      return True
-   except Exception as e:
-      print("Error occured trying to send a notification")
-      print(e)
-      return False
    
 
 
 ## TODO check every time a ticket is claimed the capcaity of the event
 # to send email to superuser
+   
+
+# ticketing routes
+
+def generate_barcode_id():
+    # VERY UNECEESARY, but i plan to work on this application after the coursework
+    # on the off chance, barcode number already exists, keep making new ones
+      barcode_id = str(randint(1000000000000000, 10000000000000000)) 
+      return barcode_id
+        
+
+@login_required
+@app.route('/events/book/<int:event_id>', methods=['GET','POST'])
+def book_ticket(event_id):
+   # check capacity of the event being booked
+   try:
+      event = Event.query.get(event_id)
+      if not event:
+         flash("This event doesn't exist ")
+         print(f"Event id {event_id} doesn't exist", "success")
+         return redirect(url_for('all_events'))
+
+      # in the rare case that someone else just snatched a ticket
+      elif event.tickets_allocated == event.capacity:
+         flash("This event is now full")
+         return redirect(url_for('all_events'))
+
+      # generate barcode for the ticket
+      # create ticket
+      # push to db
+
+      # generate random 15 digit number ( i think thats the standard )
+      # https://www.geeksforgeeks.org/how-to-generate-barcode-in-python/
+
+      # generate barcode
+
+      barcode_id = generate_barcode_id()
+      barcode = EAN13(str(barcode_id))
+      barcode_path = f"static/assets/barcodes/{barcode_id}.png"
+      barcode.save(barcode_path)
+
+
+      ticket = Ticket(
+         user_id = current_user.get_id(), 
+         event_id = event.id,
+      )
+      barcode = Barcode(
+         id=barcode_id,
+         ticket_id = ticket.id,
+         event_id = event.id
+      )
+
+      db.session.add_all([ticket, barcode])
+      db.session.commit()
+
+      # send notification to user
+      send_notification(
+         title="You Booked A Ticket",
+         description=f"You booked a ticket for {event.name}",
+         user_id=current_user.get_id()
+      )
+
+      send_notification(
+         title="Ticket Allocation",
+         description=f"{current_user.forename} {current_user.surname} was allocated a ticket for {event.name}",
+         user_id = getSuperUser().id
+      )
+
+      
+
+      flash(f"You succesfully booked a ticket for {event.name}", "success")
+      return redirect(url_for('all_events'))
+
+   except Exception as e:
+      flash("An error occured whilst trying to book this event", "error")
+      print(e)
+      return redirect(url_for('all_events'))
+
+
+@login_required
+@app.route('/tickets/<int:ticket_id>/cancel')
+def cancel_ticket(ticket_id):
+   pass

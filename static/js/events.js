@@ -12,6 +12,11 @@ $(document).ready(function(){
         window.location.href = "/events/cancel/" + event_id
     })
     
+    $(".book-ticket").click(function(){
+        var event_id = $(this).closest(".card-container").attr("id")
+        window.location.href = "/events/book/" +  event_id
+ 
+    })
 
 })
 

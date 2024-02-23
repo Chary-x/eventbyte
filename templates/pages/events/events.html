@@ -28,7 +28,7 @@
 
     <h1 id="all-events"> All Events </h1>
     <section class ="events">
-        {% for event in allEvents %}  
+        {% for event in events %}  
             {% set full = event.tickets_allocated == event.capacity %}
             {% set tickets_remaining = event.capacity - event.tickets_allocated %}
             <div id ="{{ event.id }}" class="card-container {% if event.cancelled %}cancelled{% endif %}">
@@ -44,11 +44,8 @@
 
                                 {% if not event.cancelled %}
                                     <button class="delete" type="submit">Cancel</button>
-                                {% endif %}
-                            
-                            {% endif %}
-
-                            
+                                {% endif %}                     
+                            {% endif %}               
                         </div>
 
                     </div>

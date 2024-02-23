@@ -28,7 +28,7 @@ class User(UserMixin, db.Model):
 
     superuser = db.relationship('SuperUser', back_populates='user')
     notifications = db.relationship('Notification', back_populates='user')
-
+    tickets = db.relationship('Ticket', back_populates='user') 
      
     # Constructor
     def __init__(self, email, forename, surname, passwordHash):
@@ -77,6 +77,8 @@ class Event(db.Model):
     location = db.Column(db.Text())
     cancelled = db.Column(db.Boolean, default=False)
 
+    tickets = db.relationship('Ticket', back_populates='event')
+    barcodes = db.relationship('Barcode', back_populates='events')
 
     def __init__(self, name, description, date, start_time, duration, capacity, location, tickets_allocated=0):
         self.name = name 
@@ -102,6 +104,27 @@ class Event(db.Model):
             formatted_duration = formatted_duration[:-4]  
         return formatted_duration
 
+
+class Ticket(db.Model):
+    __tablename__ = 'ticket'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
+    date = db.Column(db.DateTime, default=datetime.now)
+
+    user = db.relationship('User', back_populates='tickets')
+    event = db.relationship('Event', back_populates='tickets')
+    barcode = db.relationship('Barcode', back_populates='ticket')
+
+# maps ticket to event
+class Barcode(db.Model):
+    __tablename__ = 'barcode'
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), unique=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
+
+    ticket = db.relationship('Ticket', back_populates='barcode')
+    events = db.relationship('Event', back_populates='barcodes')
 
 class Notification(db.Model):
     __tablename__ = "notification"
@@ -158,8 +181,8 @@ def addDummyData():
             description="party with friends",
             start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
             duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
-            capacity=100,  # Example capacity
-            location="Somewhere"  # Example location
+            capacity=100,  # example capacity
+            location="Somewhere"  # example location
         ),
         Event(
             name="Code Jam",
@@ -167,8 +190,28 @@ def addDummyData():
             description="Make games",
             start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
             duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
+            capacity=100,  # example capacity
+            location="Somewhere", # example location
+            tickets_allocated = 50
+        ),
+        Event(
+            name="Valorant Night",
+            date=datetime.strptime("21/02/2025", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            description="Play games",
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
+            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
             capacity=100,  # Example capacity
             location="Somewhere", # Example location
+            tickets_allocated = 50
+        ),
+        Event(
+            name="Overwatch Night",
+            date=datetime.strptime("21/02/2026", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            description="Play games",
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
+            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
+            capacity=100,  # example capacity
+            location="Somewhere", # example location
             tickets_allocated = 50
         )
     ]
@@ -177,10 +220,10 @@ def addDummyData():
     db.session.commit()
 
 
-    # Check if SuperUser exists
+    # check if SuperUser exists
     super_user = SuperUser.query.first()    
     if super_user is None:
-        # If SuperUser does not exist, create one
+        # if SuperUser does not exist, create one
         super_user = SuperUser(user_id=user_list[0].id)  # Assuming the first user is the superuser
         db.session.add(super_user)
         db.session.commit()
