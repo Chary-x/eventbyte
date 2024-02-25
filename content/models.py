@@ -25,6 +25,7 @@ class User(UserMixin, db.Model):
     emailVerified = db.Column(db.Boolean, default=False)
     lastLoggedIn = db.Column(db.DateTime) 
     verificationToken = db.Column(db.Text())
+    resetToken = db.Column(db.Integer)
 
     superuser = db.relationship('SuperUser', back_populates='user')
     notifications = db.relationship('Notification', back_populates='user')
@@ -177,41 +178,41 @@ def addDummyData():
     event_list = [
         Event(
             name="Pop",
-            date=datetime.strptime("2024-02-21", "%Y-%m-%d"),  # Set the date to today's date, for example
+            date=datetime.strptime("2024-02-21", "%Y-%m-%d"),  
             description="party with friends",
-            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
-            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
-            capacity=100,  # example capacity
-            location="Somewhere"  # example location
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  
+            duration=datetime.strptime("01:30", "%H:%M").time(),  
+            capacity=100,  
+            location="Somewhere"  
         ),
         Event(
             name="Code Jam",
-            date=datetime.strptime("21/02/2024", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            date=datetime.strptime("21/02/2024", "%d/%m/%Y").date(),  
             description="Make games",
-            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
-            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
-            capacity=100,  # example capacity
-            location="Somewhere", # example location
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  
+            duration=datetime.strptime("01:30", "%H:%M").time(),  
+            capacity=100,  
+            location="Somewhere", 
             tickets_allocated = 50
         ),
         Event(
             name="Valorant Night",
-            date=datetime.strptime("21/02/2025", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            date=datetime.strptime("21/02/2025", "%d/%m/%Y").date(), 
             description="Play games",
-            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
-            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
-            capacity=100,  # Example capacity
-            location="Somewhere", # Example location
+            start_time=datetime.strptime("01:00", "%H:%M").time(),   
+            duration=datetime.strptime("01:30", "%H:%M").time(), 
+            capacity=100,  #
+            location="Somewhere",
             tickets_allocated = 50
         ),
         Event(
             name="Overwatch Night",
-            date=datetime.strptime("21/02/2026", "%d/%m/%Y").date(),  # Set the date to today's date, for example
+            date=datetime.strptime("21/02/2026", "%d/%m/%Y").date(),  
             description="Play games",
-            start_time=datetime.strptime("01:00", "%H:%M").time(),  # Set the start time to the current time
-            duration=datetime.strptime("01:30", "%H:%M").time(),  # Example duration: 1 hour 30 minutes
-            capacity=100,  # example capacity
-            location="Somewhere", # example location
+            start_time=datetime.strptime("01:00", "%H:%M").time(),  
+            duration=datetime.strptime("01:30", "%H:%M").time(),  
+            capacity=100,  
+            location="Somewhere", 
             tickets_allocated = 50
         )
     ]

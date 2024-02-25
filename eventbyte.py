@@ -11,6 +11,7 @@ from datetime import datetime
 from barcode import EAN13
 from barcode.writer import ImageWriter
 from random import randint
+import uuid
 
 # database imports
 
@@ -53,8 +54,6 @@ try:
         raise Exception("SECRET_KEY environment variable is not set.")
 except Exception as e:
     raise Exception(f"error setting SECRET_KEY: {e}")
-BASE_URL = os.getenv('BASE_URL')
-
 
 
 #print(app.config.items())
@@ -144,11 +143,19 @@ def register():
          return redirect(url_for('login'))
 
 def send_verification_email(email: str, token: str):
-   link = f"{BASE_URL}{url_for('verify_email', email=email, token=token)}"
+   link = f"{os.getenv('FLASK_RUN_PORT')}{url_for('verify_email', email=email, token=token)}"
    message = Message('Email Verification Link', recipients=[email])
    message.body = f'Click the link to verify your email\n {link}'
    print(f"Trying to send {message.body} To {email}")
    mail.send(message)
+
+
+def send_email(recipients, title: str, body: str):
+   message = Message(title, recipients=recipients)
+   message.body = body
+   mail.send(message)
+
+
 
 def isExistingEmail(email: str) -> bool:
    existingEmail = User.query.filter_by(email=email).first()
@@ -300,10 +307,66 @@ def userInSession() -> Optional[User]:
       return None
    
 # todo -> login and forgot password
-@app.route('/auth/forgot-password')
+@app.route('/auth/forgot_password', methods=['GET','POST'])
 def forgot_password():
-   pass
+   if request.method == 'GET':
+      return render_template('pages/auth/forgot_password.html')
+   
+   if request.method == 'POST':
+      email = request.form['email']
+      try:
+         user = User.query.get(email) 
+         if user:  # check if email exists
 
+
+            # https://www.uuidgenerator.net/dev-corner/python
+
+
+            reset_code = uuid.uuid4()
+            send_email(recipients=[email],
+                       title= "Reset Your Password", 
+                       body = f"{os.getenv('FLASK_RUN_PORT')}/auth/reset_password/{user.email}/{reset_code}")
+            user.resetToken = reset_code
+            flash("If your email is in our system, you'll recieve a password reset", "success")
+            return redirect(url_for('login'))
+         else:
+            flash("Please register first", "error")
+            print("Email doesn't exist in db ")
+            return redirect(url_for('login'))
+      except Exception as e:
+         flash("Sorry, an error occured", "error")
+         print(e)
+         return redirect(url_for('login'))
+         
+
+
+@app.route('/auth/<email>/<int:reset_code>', methods=['GET','POST'])
+def reset_password(email, reset_code):
+   if request.method == 'GET':
+      try:
+         user = User.query.filter_by(email=email).first()
+         if user:
+            if reset_code == user.resetToken:
+               return render_template('pages/auth/password_reset.html')
+            else:
+               flash("Invalid code...", "error")
+         
+         else:
+            flash("No user could be found", "error")
+      except Exception as e:
+         print(e)
+   
+   ## TODO ACTUALLY TEST
+   # sanitise frontend first...
+   if request.method == 'POST':
+      return redirect(url_for('login'))
+   
+
+
+   # first enter email
+   # see if email exists
+   # if exists, send special code to user
+   # 
 
 # dashboard routes
 @login_required
@@ -485,11 +548,11 @@ def edit_event(event_id):
             change_type = "increased" if new_capacity > event.capacity else "decreased"
 
             # send notifications to ticekt holders on the update in capacity
-            ## TODO , change for other attributes if i implement such
+            ## TODO , change for other attributes if i implement such, for additional features
             for ticket in event.tickets:
                send_notification(
                   title="Capacity Change",
-                  description=f"The capacity for Event {event.name} has been {change_type} from {old_capacity} to {new_capacity}",
+                  description=f"The capacity for {event.name} has been {change_type} from {old_capacity} to {new_capacity}",
                   user_id=ticket.user_id
                )
                   

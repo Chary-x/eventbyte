@@ -1,0 +1,28 @@
+
+.page-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+.navbar{
+    flex-grow: 1;
+
+}
+
+.form-container {
+    width: 700px;
+}
+form {
+    padding: 50px 120px 50px;
+
+}
+
+button {
+    margin-bottom: 0 30px;
+}
+
+#forgotten-pw{
+    text-decoration: none;
+}
