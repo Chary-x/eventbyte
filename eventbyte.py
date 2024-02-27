@@ -643,8 +643,9 @@ def notifications():
 
 def generate_barcode_id():
     # VERY UNECEESARY, but i plan to work on this application after the coursework
-    # on the off chance, barcode number already exists, keep making new ones
-      barcode_id = str(randint(1000000000000000, 10000000000000000)) 
+    # on the off chance, barcode number already exists, keep making new ones#
+      # generate random 13 digit number
+      barcode_id = randint(1000000000000, 10000000000000)
       return barcode_id
         
 
@@ -674,8 +675,10 @@ def book_ticket(event_id):
       # generate barcode
 
       barcode_id = generate_barcode_id()
-      barcode = EAN13(str(barcode_id))
-      barcode_path = f"static/assets/barcodes/{barcode_id}.png"
+      print(f"Barcode ID : {barcode_id}")
+      barcode = EAN13(str(barcode_id), writer = ImageWriter())
+      
+      barcode_path = f"static/assets/barcodes/{barcode_id}"
       barcode.save(barcode_path)
 
 
@@ -683,13 +686,17 @@ def book_ticket(event_id):
          user_id = current_user.get_id(), 
          event_id = event.id,
       )
+
+      db.session.add(ticket)
+      db.session.commit()
+
       barcode = Barcode(
          id=barcode_id,
          ticket_id = ticket.id,
          event_id = event.id
       )
 
-      db.session.add_all([ticket, barcode])
+      db.session.add(barcode)
       db.session.commit()
 
       # send notification to user

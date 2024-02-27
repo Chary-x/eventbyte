@@ -111,11 +111,18 @@ class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
-    date = db.Column(db.DateTime, default=datetime.now)
+    booked_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User', back_populates='tickets')
     event = db.relationship('Event', back_populates='tickets')
     barcode = db.relationship('Barcode', back_populates='ticket')
+
+    def __init__(self, user_id, event_id):
+        self.user_id = user_id 
+        self.event_id = event_id
+
+    def format_booked_at(self):
+        return self.booked_at.strftime('%d/%m/%Y %H:%M') 
 
 # maps ticket to event
 class Barcode(db.Model):
@@ -126,6 +133,11 @@ class Barcode(db.Model):
 
     ticket = db.relationship('Ticket', back_populates='barcode')
     events = db.relationship('Event', back_populates='barcodes')
+
+    def __init__(self, id, ticket_id, event_id):
+        self.id = id 
+        self.ticket_id = ticket_id 
+        self.event_id = event_id
 
 class Notification(db.Model):
     __tablename__ = "notification"
