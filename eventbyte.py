@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime
 
 from barcode import EAN13
-from barcode.writer import ImageWriter
+from barcode.writer import ImageWriter, SVGWriter
 from random import randint
 import uuid
 
@@ -20,7 +20,7 @@ import os
 from dotenv import load_dotenv
 
 # model class imports
-from content.models import db, dbinit, User, Event,SuperUser, Notification, Ticket, Barcode
+from content.models import db, dbinit, User, Event,SuperUser, Barcode, Notification, Ticket
 
 load_dotenv()
 login_manager = LoginManager()
@@ -443,6 +443,7 @@ def create_event():
          duration= request.form['duration']
          capacity = request.form['capacity']
          location = request.form['location']
+         max_tickets_per_user = request.form['max_tickets_per_user']
          
          # try creating event object
          try:
@@ -454,6 +455,7 @@ def create_event():
                duration=datetime.strptime(duration, '%H:%M').time(), # db.Time only accepts time objects
                capacity=capacity, 
                location=location,
+               max_tickets_per_user=max_tickets_per_user
             )
 
             # add event to database
@@ -544,7 +546,6 @@ def edit_event(event_id):
             old_capacity= event.capacity
             event.capacity = new_capacity
 
-
             change_type = "increased" if new_capacity > event.capacity else "decreased"
 
             # send notifications to ticekt holders on the update in capacity
@@ -596,7 +597,7 @@ def cancel_event(event_id):
       send_notification(
          title="Event Cancelled",
          description= f"Event {event.name} was cancelled",
-         user_id= current_user.get_id()
+         user_id= current_user.id
       )
       
       # send cancellation notificaiton to every user who has a ticket for this event
@@ -632,12 +633,6 @@ def notifications():
          return redirect(url_for('all_events'))
 
 
-   
-
-
-## TODO check every time a ticket is claimed the capcaity of the event
-# to send email to superuser
-   
 
 # ticketing routes
 
@@ -656,14 +651,24 @@ def book_ticket(event_id):
    try:
       event = Event.query.get(event_id)
       if not event:
-         flash("This event doesn't exist ")
-         print(f"Event id {event_id} doesn't exist", "success")
-         return redirect(url_for('all_events'))
+         print(f"Event id {event_id} doesn't exist")
+         return jsonify({
+            "error" : "This event doesn't exist"
+         })
 
       # in the rare case that someone else just snatched a ticket
       elif event.tickets_allocated == event.capacity:
-         flash("This event is now full")
-         return redirect(url_for('all_events'))
+         return jsonify({
+            "error" : "This event is now full"
+         })
+
+      # check for number of tickets user has for this event
+
+      ## TODO check if user has max_tickets_per_user tickets for this event already
+
+
+      # allow user to book up to 5 tickets for an event
+
 
       # generate barcode for the ticket
       # create ticket
@@ -673,33 +678,33 @@ def book_ticket(event_id):
       # https://www.geeksforgeeks.org/how-to-generate-barcode-in-python/
 
       # generate barcode
-
-      barcode_id = generate_barcode_id()
-      print(f"Barcode ID : {barcode_id}")
-      barcode = EAN13(str(barcode_id), writer = ImageWriter())
       
-      barcode_path = f"static/assets/barcodes/{barcode_id}"
-      barcode.save(barcode_path)
-
-
+      barcode = EAN13(str(generate_barcode_id()))
+      barcode_id = int(barcode.ean)
+      #barcode_path = f"static/assets/barcodes/{barcode_id}.png"
+      #barcode.save(barcode_path)
+      
       ticket = Ticket(
          user_id = current_user.get_id(), 
          event_id = event.id,
+         barcode_id = barcode_id
       )
 
       db.session.add(ticket)
       db.session.commit()
 
       barcode = Barcode(
-         id=barcode_id,
-         ticket_id = ticket.id,
-         event_id = event.id
+         id = int(barcode.ean),
+         svg_data = barcode.render().decode('utf-8') # decode to ut8 so jinja can use
       )
 
       db.session.add(barcode)
       db.session.commit()
 
+      barcode = Barcode.query.get(barcode_id)
+      print(barcode.get_svg_data())
       # send notification to user
+
       send_notification(
          title="You Booked A Ticket",
          description=f"You booked a ticket for {event.name}",
@@ -712,18 +717,45 @@ def book_ticket(event_id):
          user_id = getSuperUser().id
       )
 
-      
-
-      flash(f"You succesfully booked a ticket for {event.name}", "success")
-      return redirect(url_for('all_events'))
+      user_tickets = Ticket.query.filter_by(user = current_user, event=event).count()
+      reached_max_tickets = user_tickets >= event.max_tickets_per_user
+      ## TODO finished here
+      return jsonify({
+         "success" : f"You succesfully booked a ticket for {event.name}",
+         "max_tickets" : reached_max_tickets
+      })
 
    except Exception as e:
-      flash("An error occured whilst trying to book this event", "error")
-      print(e)
-      return redirect(url_for('all_events'))
+      return jsonify({
+         "An error occured whilst trying to book this event", "error"
+      })
 
+
+
+
+
+# tickets
+   
+@login_required
+@app.route('/tickets/my-tickets')
+def my_tickets():
+   try:
+      # get all tickets the user has
+      tickets = Ticket.query.filter_by(user = current_user).all()
+      return render_template('pages/my_tickets.html', tickets = tickets)
+
+   except Exception as e:
+      print(e)
+      return jsonify({
+         "error" : "An error occured"
+      })
+      
 
 @login_required
-@app.route('/tickets/<int:ticket_id>/cancel')
+@app.route('/tickets/<int:ticket_id>/cancel', methods = ['POST'])
 def cancel_ticket(ticket_id):
-   pass
+   try:
+      Ticket.query.get(ticket_id).delete()
+      flash("Ticket Removed")
+   except Exception as e:
+      print(e)

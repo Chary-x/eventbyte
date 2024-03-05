@@ -77,11 +77,12 @@ class Event(db.Model):
     tickets_allocated = db.Column(db.Integer, default=0)
     location = db.Column(db.Text())
     cancelled = db.Column(db.Boolean, default=False)
+    max_tickets_per_user = db.Column(db.Integer, default=1)
 
     tickets = db.relationship('Ticket', back_populates='event')
-    barcodes = db.relationship('Barcode', back_populates='events')
+  
 
-    def __init__(self, name, description, date, start_time, duration, capacity, location, tickets_allocated=0):
+    def __init__(self, name, description, date, start_time, duration, capacity, location, tickets_allocated=0, max_tickets_per_user=1):
         self.name = name 
         self.description = description
         self.date = date 
@@ -90,6 +91,7 @@ class Event(db.Model):
         self.capacity = capacity
         self.location = location
         self.tickets_allocated = tickets_allocated
+        self.max_tickets_per_user = max_tickets_per_user
 
     def format_date(self):
       return self.date.strftime('%d/%m/%Y')
@@ -112,32 +114,35 @@ class Ticket(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
     booked_at = db.Column(db.DateTime, default=datetime.now)
+    barcode_id = db.Column(db.Integer, db.ForeignKey('barcode.id'))  
 
     user = db.relationship('User', back_populates='tickets')
     event = db.relationship('Event', back_populates='tickets')
     barcode = db.relationship('Barcode', back_populates='ticket')
 
-    def __init__(self, user_id, event_id):
+    def __init__(self, user_id, event_id, barcode_id):
         self.user_id = user_id 
         self.event_id = event_id
+        self.barcode_id = barcode_id
 
     def format_booked_at(self):
         return self.booked_at.strftime('%d/%m/%Y %H:%M') 
 
-# maps ticket to event
+
 class Barcode(db.Model):
     __tablename__ = 'barcode'
     id = db.Column(db.Integer, primary_key=True)
-    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), unique=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
+    svg_data = db.Column(db.Text())
 
     ticket = db.relationship('Ticket', back_populates='barcode')
-    events = db.relationship('Event', back_populates='barcodes')
 
-    def __init__(self, id, ticket_id, event_id):
+    def __init__(self, id, svg_data):
         self.id = id 
-        self.ticket_id = ticket_id 
-        self.event_id = event_id
+        self.svg_data = svg_data
+
+
+    def get_svg_data(self):
+        return self.svg_data
 
 class Notification(db.Model):
     __tablename__ = "notification"

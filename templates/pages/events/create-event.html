@@ -88,6 +88,18 @@
                         placeholder="Location"
                     />
                 </label>   
+
+                <label>
+                    <input 
+                        name="max_tickets_per_user"
+                        type="number"
+                        min="1"
+                        placeholder="Maximum Amount Of Tickets Per User"
+                        onfocus="(this.type='number')"
+                        onblur="(this.type='text')"
+                        >
+                </label>
+
             </fieldset>         
             <button class="submit" type="submit">Create</button>
         </form>

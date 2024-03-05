@@ -52,6 +52,17 @@
     color: #666; 
 }
 
+.card-footer{
+    display: flex;
+    flex-direction: column;
+
+}
+
+.barcode{
+    max-height: 200px;
+    max-width: 200px;
+}
+
 .cancelled{
     background-color: red;
     color: white    ;
@@ -61,4 +72,5 @@
 .cancelled .card-name{
     color: white;
 }
+
 
