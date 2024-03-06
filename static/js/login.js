@@ -1,20 +1,35 @@
 $(document).ready(function (){
 
-    $("#login-form").submit(function(e){
+    var form = $("#login-form")
+    form.submit(function(e){
         e.preventDefault();
 
         if (sanitiseInputs()){
-            this.submit()
+            $.ajax({
+                type: "POST",
+                url: "/auth/login",
+                data: form.serialize(),
+                success: function(res){
+                    if (res.success){
+                        window.location.href = "/dashboard"
+                    }
+                    
+                    else if (res.error){
+                        showToast(res.error, "error")
+                    }
+                },
+                error: function(xhr, status, error){
+                    showToast(error.error, "error")
+                }
+            })
+        
         }
     });
 });
 
 function sanitiseInputs(){
-    if (checkEmail() && checkPassword()){ //  can add in future checks here if needed
-        return true
-    } else {
-        return false
-    }
+    return checkEmail() && checkPassword()
+
 
 }
 

@@ -1,21 +1,36 @@
 
 $(document).ready(function (){
+    var form = $("#register-form")
 
-    $("#register-form").submit(function(e){
+    form.submit(function(e){
 
         e.preventDefault()
         
         if (sanitiseInputs()) {
-            this.submit()
+            $.ajax({
+                type: "POST",
+                url: "/auth/register",
+                data: form.serialize(),
+                success: function(res){
+                    if (res.success){
+                        showToast(res.success, "success")
+                        window.location.href = "/auth/login"
+                    }
+                    else {
+                        showToast(res.error, "error")
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showToast(error.error, "error")
+                    console.log(error)
+                }
+            })
         }
     });
 });
 
 function sanitiseInputs() {
-    if (!(checkFields() && checkPassword())) {
-        return false;
-    }
-    return true;
+    return checkFields() && checkPassword()
 }
 
 function checkFields() {

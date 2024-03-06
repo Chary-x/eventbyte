@@ -6,11 +6,31 @@ $(document).ready(function(){
         window.location.href = "/events/edit/" + event_id;
     })
 
-
     $(".delete").click(function(){
-        var event_id = $(this).closest(".card-container").attr("id")
-        window.location.href = "/events/cancel/" + event_id
-    })
+        var event_id = $(this).closest(".card-container").attr("id");
+        var event = $(this).closest(".card-container");
+
+        var deleteButton = $(this)
+        var editButton = event.find(".edit")
+        console.log(editButton)
+        $.ajax({
+            type: "PUT",
+            url: "/events/cancel/" + event_id,
+            success: function(res){
+                if (res.success){
+                    event.addClass("cancelled");
+                    deleteButton.hide()
+                    showToast(res.success, "success");
+                } else {
+                    showToast(res.error, "error");
+                }
+            },
+            error: function(xhr, status, error){
+                showToast(error.error, "error");
+            }
+        });
+    });
+
     
     $(".book-ticket").click(function(e) {
         e.preventDefault();
@@ -22,8 +42,13 @@ $(document).ready(function(){
             url: "/events/book/" + event_id,
             data: { event_id: event_id },
             success: function(res) {
-                showToast(res.success, "success");
-                if (res.max_tickets) {
+                if(res.success){
+                    showToast(res.success, "success");
+                }
+                else if (res.error){
+                    showToast(res.error, "error")
+                }
+                else if (res.max_tickets) {
                     button.hide();
                 }
             },

@@ -24,8 +24,8 @@ class User(UserMixin, db.Model):
     createdAt = db.Column(db.DateTime, default=datetime.now) ## get time of creation
     emailVerified = db.Column(db.Boolean, default=False)
     lastLoggedIn = db.Column(db.DateTime) 
-    verificationToken = db.Column(db.Text())
-    resetToken = db.Column(db.Integer)
+    verificationCode = db.Column(db.Text())
+    resetCode = db.Column(db.Integer)
 
     superuser = db.relationship('SuperUser', back_populates='user')
     notifications = db.relationship('Notification', back_populates='user')
@@ -40,12 +40,15 @@ class User(UserMixin, db.Model):
     
     @staticmethod
     def generate_verification_token(email):
-        token_data = {'email' : email, 'timestamp' : datetime.now()}
+        token_data = {'email' : email, 
+                      'timestamp' : str(datetime.now())
+                     }
         verification_token = pickle.dumps(token_data)
         return verification_token
 
     def verify_token(self, token_data) -> bool:
-        email = token_data.get('email')
+        email = token_data['email']
+        timestamp = token_data['timestamp'] # idk what to do with this yet, some sort of expiry logic
         if email:
             return email == self.email
         return False
@@ -100,7 +103,6 @@ class Event(db.Model):
     def format_start_time(self):
         return self.start_time.strftime('%H:%M')
 
-
     def format_duration(self):
         formatted_duration = self.duration.strftime('%-Hh:%Mm').lstrip('0')
         if self.duration.minute == 0:
@@ -115,6 +117,7 @@ class Ticket(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
     booked_at = db.Column(db.DateTime, default=datetime.now)
     barcode_id = db.Column(db.Integer, db.ForeignKey('barcode.id'))  
+    cancelled = db.Column(db.Boolean, default=False)
 
     user = db.relationship('User', back_populates='tickets')
     event = db.relationship('Event', back_populates='tickets')
@@ -162,7 +165,6 @@ class Notification(db.Model):
     def format_sent_at(self):
         return self.sent_at.strftime('%d/%m/%Y %H:%M')
     
-
 def addDummyData():
     user_list = [
         User(
@@ -183,14 +185,11 @@ def addDummyData():
             surname="publictester123@gmail.com",
             passwordHash=generate_password_hash("publictester123@gmail.com", salt_length=10) 
         )]
-    # for attendee testing TODO remove
+    # for testing purposes
     user_list[0].emailVerified = True
     user_list[1].emailVerified = True
     db.session.add_all(user_list)
     db.session.commit()
-    
-    today_date= datetime.now().date()
-    today_time = datetime.now().time()
 
     event_list = [
         Event(

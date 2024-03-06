@@ -4,6 +4,11 @@
     {% include 'components/dashnav.html' %}
 {% endblock %}
 
+{% block js %}
+<script src ="/static/js/jquery-3.7.1.min.js"></script>
+<script src= "/static/js/create-event.js"></script>
+{% endblock js %}
+
 
 {% block css %}
     <link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
@@ -13,10 +18,9 @@
 {% block content %}
 <main class="page-container">    
     <div class="form-container">
-        <form action="/events/create" method="post">
+        <form id ="create-event">
             <h1> Create Event </h1>
             <fieldset>
-
                 <label>
                     <input
                         name="name"
@@ -77,7 +81,10 @@
                     <input  
                         name="capacity"
                         type="text"
+                        min = 1
                         placeholder="Capacity"
+                        onfocus="(this.type='number')"
+                        onblur="(this.type='text')""
                     />
                 </label>
 

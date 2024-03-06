@@ -33,10 +33,10 @@ app = Flask(__name__)
 # https://pythonbasics.org/flask-mail/ 
 
 # for warwick base
-app.config['MAIL_SUPPRESS_SEND'] = True
+app.config['MAIL_SUPPRESS_SEND'] = False
 app.config['MAIL_USE_TLS'] = False 
 app.config['MAIL_DEFAULT_SENDER'] = 'no-reply@warwick.ac.uk'
-
+app.config['SECRET_KEY'] = "i'm a really secret key" # to be put in .env for future
 """
 app.config['MAIL_SUPPRESS_SEND'] = False  
 app.config['MAIL_USE_TLS'] = True  
@@ -47,14 +47,6 @@ app.config['MAIL_USERNAME'] = 'eventbyte.org@gmail.com'
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = 'eventbyte.org@gmail.com'  # Default sender email address
 """
-
-try:
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    if app.config['SECRET_KEY'] is None:
-        raise Exception("SECRET_KEY environment variable is not set.")
-except Exception as e:
-    raise Exception(f"error setting SECRET_KEY: {e}")
-
 
 #print(app.config.items())
 #select datbase filename, other configs
@@ -92,6 +84,17 @@ def index():
 # auth routes
 
 
+def send_verification_email(email, token):
+   #link = f"127.0.0.1:{os.getenv('FLASK_RUN_PORT')}{url_for('verify_email', email=email)}"
+   link = url_for('verify_email', email=email, _external=True)
+   message = Message('Email Verification Link', recipients=[email])
+   message.body = f'''Click the link to verify your email
+                  \n {link} 
+                  \n Your code is : {token}
+                  '''
+   
+   print(f"Trying to send {message.body} To {email}")
+   mail.send(message)
 
 @app.route('/auth/register', methods=['POST','GET'])
 def register(): 
@@ -103,8 +106,9 @@ def register():
       email = request.form['email'].lower() # get email from form
       ## check if email already exists
       if isExistingEmail(email):
-         flash("Email already exists","error")
-         return redirect(url_for('register'))
+         return jsonify({
+            "error" : "Email already exists"
+         })
       else:
          # extract payload 
          forename = request.form['forename']
@@ -121,40 +125,39 @@ def register():
          )
          
          db.session.add(user)
-         db.session.commit()
 
          # generate token
-         token = User.generate_verification_token(email) 
-         session['auth_token'] = token
+
+         token = uuid.uuid4()
+         user.verificationCode = str(token)
+
+         db.session.commit()
 
          # try sending verification email
          try:
             send_verification_email(email, token)
+
+            flash("Sent you a verification email", "success")
+            return jsonify({
+               "success" : "Sent you a verification email"
+            })
+         
          except Exception as e:
             print(f"Failed to send verification email to {email} : {e}")
-            flash(f"An error occured whilst attempting to send you a verification email", "error")
             print("\nError details : "  + str(e))
-            return redirect(url_for('register'))
+            return jsonify({
+               "error" : "An error occured whilst attempting to send you a verification email"
+            })
          
          # send visual feedback
-         flash('Email confirmation sent', 'success')
 
          # redirect to login
-         return redirect(url_for('login'))
-
-def send_verification_email(email: str, token: str):
-   link = f"{os.getenv('FLASK_RUN_PORT')}{url_for('verify_email', email=email, token=token)}"
-   message = Message('Email Verification Link', recipients=[email])
-   message.body = f'Click the link to verify your email\n {link}'
-   print(f"Trying to send {message.body} To {email}")
-   mail.send(message)
-
+         
 
 def send_email(recipients, title: str, body: str):
    message = Message(title, recipients=recipients)
    message.body = body
    mail.send(message)
-
 
 
 def isExistingEmail(email: str) -> bool:
@@ -164,26 +167,36 @@ def isExistingEmail(email: str) -> bool:
    else:
       return False
 
-@app.route('/auth/verify-email/<token>')
-def verify_email(token):
-   try:
-      token_data = pickle.loads(token)
-      email = token_data.get('email')
-      user = User.query.filter_by(email=email).first()
+@app.route('/auth/verify-email/<email>', methods =['GET','POST'])
+def verify_email(email):
+   if request.method == 'GET':
+      return render_template('pages/auth/verify-email.html')
+   
+   if request.method == 'POST':
+      try:
+         token = request.form['token']
 
-      if user and user.verify_token(token_data):
-         # update user email and verification bool
-         user.emailVerified = True
-         db.session.commit()
-         flash('Email verification successful! You can now log in', 'success')
-         return redirect(url_for('login'))
+         user = User.query.filter_by(email=email).first()  # get user by email
+         stored_token = user.verificationCode
 
-      else:
-         flash('Invalid or expired verification link', 'error')
-         return redirect(url_for('register'))
-   except Exception as e:
-      flash('An error occurred during email verification, Please try again later', 'error')
-      return redirect(url_for('register')) # redirect to register
+         if stored_token == token:
+            # update user email and verification status
+            user.emailVerified = True
+            db.session.commit()
+            flash("Email verification successful! You can now log in", "success")
+            return jsonify({
+               "success" : "Email verification succesful"
+            })
+         else:
+            return jsonify({
+               "error" : "Invalid or expired verification link"
+            })
+
+      except Exception as e:
+         print(e)
+         return jsonify({
+            "error" : 'An error occurred during email verification. Please try again later'
+         })
 
 
 def send_notification(title, description, user_id):
@@ -212,15 +225,14 @@ def login():
       email = request.form['email']
       password = request.form['password']
       try:
-
          user = User.query.filter_by(email=email).first()
-         
          if not user:
-            flash('This email does not exist', 'error')
-            return redirect(url_for('login'))  # redirectto the login route
 
+            return jsonify({
+               "error" : "This email does not exist"
+            })
+         
          # temporary for development
-
          super_user = getSuperUser()
          if user.id == super_user.user_id:
             send_notification(
@@ -234,31 +246,29 @@ def login():
                description=f"User {user.forename} {user.surname} logged out",
                user_id=super_user.user_id
             )
-         login_user(user)
 
-         return redirect(url_for('dashboard'))
-         """
          if not user.emailVerified:
-            flash("You must verify your email before logging in", "error")
-            return redirect(url_for('login'))
-         
+            return jsonify({
+               "error" : "You must verify your email before logging in"
+            })
+
          if check_password_hash(user.passwordHash, password):
             login_user(user)
             flash("Successful Login", "success")
-            print("Succesful Login")
-            # Store the user id in session... TODO : create a more secure method, like tokenising again
-            session['user_id'] = user.id
-            return redirect(url_for('dashboard'))  # redirect to the dashboard route
+            return jsonify({
+               "success" : "Successful Login"
+            })
          else:
-               flash("Your password is incorrect, please try again", "error")
-               return redirect(url_for('login'))  # redirect to login
-         """
+            return jsonify({
+               "error" : "Your password is incorrect, please try again"
+            })
+         
       except Exception as e:
          print("Error searching for user by email after login post req ")
          print(e)
-         flash("An error occurred. Please try again later.", "error")
-         return redirect(url_for('login'))  # redirect to the login route
-
+         return jsonify({
+            "error" : "An error occured, pelase try again later"
+         })
 
 
 def getSuperUser():
@@ -269,9 +279,6 @@ def getSuperUser():
       print(e)
       print("Error trying to get super user object")
       
-
-
-
    
 @app.route('/auth/logout')
 @login_required
@@ -307,7 +314,7 @@ def userInSession() -> Optional[User]:
       return None
    
 # todo -> login and forgot password
-@app.route('/auth/forgot_password', methods=['GET','POST'])
+@app.route('/auth/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
    if request.method == 'GET':
       return render_template('pages/auth/forgot_password.html')
@@ -315,52 +322,64 @@ def forgot_password():
    if request.method == 'POST':
       email = request.form['email']
       try:
-         user = User.query.get(email) 
-         if user:  # check if email exists
-
-
-            # https://www.uuidgenerator.net/dev-corner/python
-
-
-            reset_code = uuid.uuid4()
+         user = User.query.filter_by(email=email).first()
+         if user:
+            reset_code = str(uuid.uuid4())
             send_email(recipients=[email],
-                       title= "Reset Your Password", 
-                       body = f"{os.getenv('FLASK_RUN_PORT')}/auth/reset_password/{user.email}/{reset_code}")
-            user.resetToken = reset_code
-            flash("If your email is in our system, you'll recieve a password reset", "success")
+                        title="Reset Your Password", 
+                        body=url_for('reset_password', 
+                                     email=user.email, 
+                                     reset_code=reset_code, 
+                                     _external = True)
+                        )
+            user.resetCode = reset_code
+            db.session.commit()
+
+            flash("If your email is in our system, you'll receive a password reset", "success")
             return redirect(url_for('login'))
          else:
             flash("Please register first", "error")
-            print("Email doesn't exist in db ")
+            print("Email doesn't exist in db")
             return redirect(url_for('login'))
       except Exception as e:
-         flash("Sorry, an error occured", "error")
+         flash("Sorry, an error occurred", "error")
          print(e)
-         return redirect(url_for('login'))
+
          
-
-
-@app.route('/auth/<email>/<int:reset_code>', methods=['GET','POST'])
+@app.route('/auth/reset_password/<email>/<reset_code>', methods=['GET', 'POST'])
 def reset_password(email, reset_code):
    if request.method == 'GET':
       try:
          user = User.query.filter_by(email=email).first()
-         if user:
-            if reset_code == user.resetToken:
-               return render_template('pages/auth/password_reset.html')
-            else:
-               flash("Invalid code...", "error")
-         
+         if user and (reset_code == user.resetCode):
+            return render_template('pages/auth/password_reset.html', email=email, reset_code=reset_code)
          else:
-            flash("No user could be found", "error")
+            flash("Invalid reset code", "error")
       except Exception as e:
          print(e)
-   
-   ## TODO ACTUALLY TEST
-   # sanitise frontend first...
-   if request.method == 'POST':
+         flash("Invalid reset link", "error")
       return redirect(url_for('login'))
-   
+
+   if request.method == 'POST':
+      try:
+         user = User.query.filter_by(email=email).first()
+         password = request.form['password']
+         if user and (reset_code == user.resetCode):
+            user.passwordHash = generate_password_hash(password, salt_length = 10)
+
+            flash("Password was succesfully changed", "success")
+            return jsonify({
+               "success" : "password succesfully changed"
+            })
+         else:
+            return jsonify({
+               "error" : "Invalid credentials"
+            })
+      except Exception as e:
+         print(e)
+         return jsonify({
+            "error" : "An error occured"
+         })
 
 
    # first enter email
@@ -372,35 +391,11 @@ def reset_password(email, reset_code):
 @login_required
 @app.route('/dashboard')
 def dashboard():
-   return render_template('pages/dashboard.html',forename=current_user.forename) 
-"""
-   if userInSession() is not None:
-      return render_template('/pages/dashboard.html', user = user)
-   else:
-      flash("Error retrieving your details", "error")
-      return redirect(url_for('login))
-
-
-
-   user_id = session.get('user_id') # key exception with []
-   if user_id is None:
-      flash("You must log in to access the dashboard (tut tut)", "error")
-      return redirect(url_for('login'))
-   
-   # retrieve user object
-   try:
-      user = User.query.filter_by(id = user_id).first()
-   except Exception as e:
-      print("Error retrieving user object after login, no user with this user id")
-      flash("Error retrieving your details", "error")
-      return redirect(url_for('login'))
-   
-   # pass user object to jinja thingy
-   return render_template('/pages/dashboard.html', user = user)
-"""
-
-# events
-
+   return render_template('pages/dashboard.html',
+                          forename=current_user.forename,
+                          is_super_user = isSuperUser(current_user)
+                          ) 
+                          
 
 def isSuperUser(user) -> bool:
    try:
@@ -469,16 +464,20 @@ def create_event():
                user_id = int(current_user.get_id())
             )
 
+            print("Event created")
+
+            return jsonify({
+               "success" : "Event Was Succesfully Created"
+            })
+
          except Exception as e:
-            flash("An error occured whilst trying to create an event", "error")
+         
             print("Error occured trying to create a new event and adding it to the database")
             print(e)
-            return redirect(url_for('create_event'))
+            return jsonify({
+               "error" : "An error occured whilst trying to create an event"
+            })
          
-         flash("Event Was Succesfully Created", "success")
-         print("Event created")
-
-         return redirect(url_for('create_event'))
    else:
       flash("Only superusers can create events", "error")
       return redirect(url_for('dashboard'))
@@ -573,47 +572,54 @@ def edit_event(event_id):
    else:
       flash("Only superusers can edit events", "error")
       return redirect(url_for('dashboard'))
-   
-@app.route('/events/cancel/<int:event_id>', methods =['GET'])
+
+@login_required   
+@app.route('/events/cancel/<int:event_id>', methods =['PUT'])
 def cancel_event(event_id):
-   try:
-      event = Event.query.get(event_id)
-   except Exception as e:
-      print(e)
-      print(f"Erorr occured trying to get details for event {event_id}")
-      flash("Error fetching event details", "error")
-      return redirect(url_for('all_events'))
-   
-   if event is None:
-      print(f"Event does not exist {event_id}")
-      flash("This event doesn't exist", "error")
-      return redirect(url_for('all_events'))
-   else:
+   if isSuperUser(current_user):
+      try:
+         event = Event.query.get(event_id)
+      except Exception as e:
+         print(e)
+         print(f"Erorr occured trying to get details for event {event_id}")
+         return jsonify({
+            "error" : "Error fetching event details"
+         })
       
-      # cancel the event
-      event.cancelled = True
+      if event is None:
+         print(f"Event does not exist {event_id}")
+         return jsonify({
+            "error" : "This event doesn't exist"
+         })
+      else:
+         
+         # cancel the event
+         event.cancelled = True
 
-      # send notification to 
-      send_notification(
-         title="Event Cancelled",
-         description= f"Event {event.name} was cancelled",
-         user_id= current_user.id
-      )
-      
-      # send cancellation notificaiton to every user who has a ticket for this event
-      for ticket in event.tickets:
+         # send notification to 
          send_notification(
-         title="Event Cancelled",
-         description=f"Event {event.name} was cancelled",
-         user_id=ticket.user.id
+            title="Event Cancelled",
+            description= f"Event {event.name} was cancelled",
+            user_id= current_user.id
          )
-      
-      # send notlifications
-      db.session.commit()
+         
+         # send cancellation notificaiton to every user who has a ticket for this event
+         for ticket in event.tickets:
+            send_notification(
+            title="Event Cancelled",
+            description=f"Event {event.name} was cancelled",
+            user_id=ticket.user.id
+            )
+         
+         # send notlifications
+         db.session.commit()
 
-      flash(f"{event.name} has been cancelled", "success")
-      return redirect(url_for('all_events'))
-
+         return jsonify({
+            "success" : f"{event.name} has been cancelled"
+         })
+   else:
+      flash("Only superuser can cancel events", "error")
+      return redirect(url_for('dashboard'))
 
 
 # notifcations
@@ -623,15 +629,17 @@ def cancel_event(event_id):
 def notifications():
    if request.method == 'GET':
       try:
-         # get all notifications for this user
-         notifications = Notification.query.filter_by(user_id = current_user.get_id()).all()
+         # get all notifications for this user, reverse order for ux
+         notifications = Notification.query.filter_by(
+            user_id = current_user.get_id()
+            ).order_by(Notification.sent_at.desc()).all()
+         
          return render_template('pages/notifications.html', notifications = notifications)
       except Exception as e:
          print(f"Error fetching notifications for user {current_user.get_id()}")
          print(e)
          flash("Error retrieving your notifications", "error")
          return redirect(url_for('all_events'))
-
 
 
 # ticketing routes
@@ -664,21 +672,19 @@ def book_ticket(event_id):
 
       # check for number of tickets user has for this event
 
-      ## TODO check if user has max_tickets_per_user tickets for this event already
-
-
-      # allow user to book up to 5 tickets for an event
-
-
-      # generate barcode for the ticket
-      # create ticket
-      # push to db
-
       # generate random 15 digit number ( i think thats the standard )
       # https://www.geeksforgeeks.org/how-to-generate-barcode-in-python/
 
       # generate barcode
       
+
+      user_tickets = Ticket.query.filter_by(user = current_user, event=event).count()
+      if user_tickets >= event.max_tickets_per_user:    
+      ## TODO finished here
+         return jsonify({
+            "error" : f"You've booked the maximum amount of tickets for this event",
+         })
+
       barcode = EAN13(str(generate_barcode_id()))
       barcode_id = int(barcode.ean)
       #barcode_path = f"static/assets/barcodes/{barcode_id}.png"
@@ -726,11 +732,10 @@ def book_ticket(event_id):
       })
 
    except Exception as e:
+      print(e)
       return jsonify({
          "An error occured whilst trying to book this event", "error"
       })
-
-
 
 
 
@@ -741,7 +746,10 @@ def book_ticket(event_id):
 def my_tickets():
    try:
       # get all tickets the user has
-      tickets = Ticket.query.filter_by(user = current_user).all()
+      tickets = Ticket.query.filter_by(
+         user = current_user
+         ).order_by(Ticket.booked_at.desc()).all()
+
       return render_template('pages/my_tickets.html', tickets = tickets)
 
    except Exception as e:
@@ -752,10 +760,36 @@ def my_tickets():
       
 
 @login_required
-@app.route('/tickets/<int:ticket_id>/cancel', methods = ['POST'])
+@app.route('/tickets/<int:ticket_id>/cancel', methods = ['PUT'])
 def cancel_ticket(ticket_id):
    try:
-      Ticket.query.get(ticket_id).delete()
-      flash("Ticket Removed")
+      ticket = Ticket.query.get(ticket_id)
+      if ticket.user != current_user:
+         return jsonify({
+            "error": "You don't own this ticket"
+         })
+      
+      ticket.cancelled = True
+      event = Ticket.query.get(ticket_id).event
+      event.tickets_allocated -= 1
+
+      send_notification(
+         "Ticket Cancellation",
+         f"{current_user.forename} {current_user.surname} cancelled their ticket for {event.name}",
+         getSuperUser().user_id
+         )
+      
+      return jsonify({
+         "success" : "Ticket Cancelled"
+      })
+   
    except Exception as e:
-      print(e)
+      return jsonify({
+         "error" : "An error occured trying to cancel this ticket"
+      })
+
+
+
+
+
+

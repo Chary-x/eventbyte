@@ -1,3 +1,7 @@
+main h1{
+    text-align: center;
+}
+
 .events{
     display: flex;
     height: 100%;

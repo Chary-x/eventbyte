@@ -22,10 +22,6 @@
     {% set attendee = isAttendee(current_user) %}
     {% set public = not (superuser or attendee) %}
 
-    {{ superuser }}
-    {{ attendee }} 
-    {{ public }}
-
     <h1 id="all-events"> All Events </h1>
     <section class ="events">
         {% for event in events %}  

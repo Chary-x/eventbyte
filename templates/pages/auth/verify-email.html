@@ -1,0 +1,30 @@
+{% extends 'components/base.html' %} 
+{% block css %}
+<link rel="stylesheet" href="/static/css/tags/forms.css" type="text/css">
+<link rel="stylesheet" href="/static/css/pages/auth/verify-email.css" type="text/css">
+{% endblock %}
+{% block js %}
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/verify-email.js"></script>
+{% endblock %}
+{% block content %}
+<body>  
+    <div class="page-container">
+        <form id="verification-form" class="form-container">
+            <h1>Verify Email</h1>
+            <fieldset>
+                <div class="input-group">
+                    <label>
+                        <input 
+                            name="token"
+                            type="text"
+                            placeholder="Enter Your Verification Code"
+                        />
+                    </label>
+                </div>
+                <button class="submit" type="submit"> Submit </button>
+            </fieldset>
+        </form>
+    </div>
+</body>
+{% endblock %}

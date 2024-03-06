@@ -3,7 +3,9 @@
 <nav>
     <ul>  
         <li><a href="/dashboard"> Dashboard </a></li>  
-        <li><a href="/events/create">Create Event</button>
+        {% if is_super_user %}
+            <li><a id="createEvent" href="/events/create">Create Event</button>
+        {% endif %}
         <li><a href="/auth/logout">Log Out</a></li>
     </ul>
 </nav>
