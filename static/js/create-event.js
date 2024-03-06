@@ -1,5 +1,5 @@
 $(document).ready(function(){
-    var form = $("#create-event");
+    var form = $("#create-event")
     
     form.submit(function(e){
         e.preventDefault();
@@ -11,51 +11,49 @@ $(document).ready(function(){
                 data: form.serialize(),
                 success: function(res) {
                     if (res.success){
-                        showToast(res.success, "success");  
+                        showToast(res.success, "success"); 
                         console.log(res);
                     }
                     else {
-                        showToast(res.error, "error");
-                        console.log(res);
+                        showToast(res.error, "error")
+                        console.log(res)
                     }
                 },
                 error: function(xhr, status, error) {
-                    showToast(error.error, "error");
-                    console.log(error);
+                    showToast(error.error, "error")
+                    console.log(error)
                 }
-            });
+            })
         }
-    });
+    })
+})
+
+function sanitiseInputs() {
+    return  checkInput('start_time', "You must enter a start time") && 
+            checkInput('duration', "You must enter a duration") &&
+            checkInput('date', "You must enter a date") &&
+            checkInput('name', "You must enter a title") &&
+            checkInput('capacity', "You must enter a capacity") &&
+            checkInput('location', "You must enter a location")
+}
     
-    function sanitiseInputs(){
-        return checkStartTime() && checkDuration() && checkDate();
+function checkInput(field, errorMessage) {
+    var value = $("#create-event input[name='" + field + "']").val().trim()
+    if (!value) {
+        showToast(errorMessage, "error")
+        return false
+    }
+    return true
+}
+
+function checkDate() {
+    var date = new Date($("#create-event input[name='date']").val())
+    var today = new Date();
+    
+    if (date < today) {
+        showToast("Date can't be in the past", "error")
+        return false
     }
     
-    function checkDate() {
-        var selectedDate = new Date($("#create-event input[name='date']").val());
-        var today = new Date();
-        
-        if (selectedDate <= today) {
-            showToast("Date must after today", "error")
-            return false;
-        }
-        
-        return true; 
-    }
-    
-    function checkStartTime() {
-        var startTime = $("#create-event input[name='start_time']").val();
-        if (!startTime.trim()){
-            return false
-        }
-        return true; 
-    }
-    
-    function checkDuration() {
-        var duration = $("#create-event input[name='duration']").val();
-        if (!duration.trim()){
-            return false
-        }
-        return true;
-    }
-});
+    return true;
+}

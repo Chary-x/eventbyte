@@ -1,7 +1,7 @@
-// no idea hwo to import this yet
+
 
 function showToast(message, type) {
-    var toast = $('<div class="toast"></div>'); // create new div for toast
+    var toast = $('<div class="toast"></div>') // create new div for toast
 
     if (type == "error") {
         toast.addClass("error")
@@ -12,7 +12,7 @@ function showToast(message, type) {
     }
 
     toast.text(message); 
-    toast.appendTo("body"); 
-    toast.fadeIn(400).delay(3000).fadeOut(400);
+    toast.appendTo("body");
+    toast.fadeIn(400).delay(3000).fadeOut(400)
 }
 

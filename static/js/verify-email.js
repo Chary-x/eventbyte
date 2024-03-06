@@ -1,8 +1,8 @@
 $(document).ready(function(){
-    var form = $("#verification-form");
+    var form = $("#verification-form")
 
     form.submit(function(e){
-        e.preventDefault();
+        e.preventDefault()
         if (sanitiseField()){
             $.ajax({
                 type: 'POST',
@@ -10,19 +10,19 @@ $(document).ready(function(){
                 data: form.serialize(),
                 success: function(res){
                     if (res.success){
-                        window.location.href = "/auth/login";
+                        window.location.href = "/auth/login"
                     }
                     else {
-                        showToast(res.error, "error");
+                        showToast(res.error, "error")
                     }
                 },
                 error: function(xhr, status, error){
-                    showToast(error.error, "error");
+                    showToast(error.error, "error")
                 }
-            });
+            })
         }
-    });
-});
+    })
+})
 
 
 function sanitiseField(){

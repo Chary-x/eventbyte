@@ -5,7 +5,8 @@
     align-self: center;
     font-family: WF Visual Sans, sans-serif;
     font-weight: bold;
-    max-width: 600
+    max-width: 600px;
+    margin: auto;
 
 }
 
@@ -40,7 +41,7 @@ form label {
 }
 
 input, select, option, textarea {
-    width: 100%;
+    width: calc(100% - 30px);
     background: transparent;
     border: None;
     outline: 0;

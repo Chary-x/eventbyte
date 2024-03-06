@@ -1,6 +1,5 @@
-
 # flask imports
-import pickle
+
 from flask_mail import Mail, Message
 from flask import Flask,session, flash, render_template, request, jsonify, redirect, url_for
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -9,20 +8,14 @@ from typing import Optional
 from datetime import datetime
 
 from barcode import EAN13
-from barcode.writer import ImageWriter, SVGWriter
 from random import randint
 import uuid
 
 # database imports
 
-# sec imports
-import os
-from dotenv import load_dotenv
-
 # model class imports
 from content.models import db, dbinit, User, Event,SuperUser, Barcode, Notification, Ticket
 
-load_dotenv()
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 app = Flask(__name__)
@@ -32,29 +25,17 @@ app = Flask(__name__)
 
 # https://pythonbasics.org/flask-mail/ 
 
-# for warwick base
 app.config['MAIL_SUPPRESS_SEND'] = False
 app.config['MAIL_USE_TLS'] = False 
 app.config['MAIL_DEFAULT_SENDER'] = 'no-reply@warwick.ac.uk'
 app.config['SECRET_KEY'] = "i'm a really secret key" # to be put in .env for future
-"""
-app.config['MAIL_SUPPRESS_SEND'] = False  
-app.config['MAIL_USE_TLS'] = True  
-app.config['MAIL_PORT'] = 587  # smpt port for tls
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  
-app.config['MAIL_USERNAME'] = 'eventbyte.org@gmail.com' 
-## todo , try catch on getenv, default to warwick one
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = 'eventbyte.org@gmail.com'  # Default sender email address
-"""
 
-#print(app.config.items())
-#select datbase filename, other configs
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///eventbyte.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# inits
+# app inits
 mail = Mail(app)
 db.init_app(app)
 login_manager.init_app(app)
@@ -81,8 +62,21 @@ def reqs():
 def index():
    return render_template('pages/index.html')
 
-# auth routes
+# UTILS
 
+
+def send_email(recipients, title: str, body: str):
+   message = Message(title, recipients=recipients)
+   message.body = body
+   mail.send(message)
+
+
+def isExistingEmail(email: str) -> bool:
+   existingEmail = User.query.filter_by(email=email).first()
+   if existingEmail:
+      return True    
+   else:
+      return False
 
 def send_verification_email(email, token):
    #link = f"127.0.0.1:{os.getenv('FLASK_RUN_PORT')}{url_for('verify_email', email=email)}"
@@ -95,6 +89,66 @@ def send_verification_email(email, token):
    
    print(f"Trying to send {message.body} To {email}")
    mail.send(message)
+
+
+def send_notification(title, description, user_id):
+   try:
+      notification = Notification(
+               title=title,
+               description=description,
+               user_id = user_id
+            )
+      db.session.add(notification)
+      db.session.commit()
+      return True
+   except Exception as e:
+      print("Error occured trying to send a notification")
+      print(e)
+      return False
+
+
+
+def getSuperUser():
+   try:
+      superuser = SuperUser.query.first()
+      return superuser
+   except Exception as e:
+      print(e)
+      print("Error trying to get super user object")      
+
+def isSuperUser(user) -> bool:
+   try:
+      super_user = SuperUser.query.get(user.id)
+      if super_user:
+            return True 
+      else:
+            return False
+   except Exception as e:
+      print("Error occurred trying to determine if this user was a superuser")
+      print(e)
+      return False  
+
+def isAttendee(user) -> bool:
+   try: 
+      attendee = User.query.filter_by(id = user.id).first()
+      if attendee and attendee.emailVerified and not isSuperUser(user):
+         return True 
+      else:
+         return False
+   except Exception as e:
+      print("Error occurred trying to determine if this user was an attendee")
+      print(e)
+      return False 
+
+def generate_barcode_id():
+    # VERY UNECEESARY, but i plan to work on this application after the coursework
+    # on the off chance, barcode number already exists, keep making new ones#
+      # generate random 13 digit number
+      barcode_id = randint(1000000000000, 10000000000000)
+      return barcode_id
+
+
+### AUTH ###
 
 @app.route('/auth/register', methods=['POST','GET'])
 def register(): 
@@ -154,19 +208,6 @@ def register():
          # redirect to login
          
 
-def send_email(recipients, title: str, body: str):
-   message = Message(title, recipients=recipients)
-   message.body = body
-   mail.send(message)
-
-
-def isExistingEmail(email: str) -> bool:
-   existingEmail = User.query.filter_by(email=email).first()
-   if existingEmail:
-      return True    
-   else:
-      return False
-
 @app.route('/auth/verify-email/<email>', methods =['GET','POST'])
 def verify_email(email):
    if request.method == 'GET':
@@ -198,22 +239,6 @@ def verify_email(email):
             "error" : 'An error occurred during email verification. Please try again later'
          })
 
-
-def send_notification(title, description, user_id):
-   try:
-      notification = Notification(
-               title=title,
-               description=description,
-               user_id = user_id
-            )
-      db.session.add(notification)
-      db.session.commit()
-      return True
-   except Exception as e:
-      print("Error occured trying to send a notification")
-      print(e)
-      return False
-   
 
 @app.route('/auth/login', methods=['GET', 'POST'])
 def login():
@@ -271,15 +296,6 @@ def login():
          })
 
 
-def getSuperUser():
-   try:
-      superuser = SuperUser.query.first()
-      return superuser
-   except Exception as e:
-      print(e)
-      print("Error trying to get super user object")
-      
-   
 @app.route('/auth/logout')
 @login_required
 def logout():
@@ -313,7 +329,7 @@ def userInSession() -> Optional[User]:
       print("Error retrieving user object after login, no user with this user id")
       return None
    
-# todo -> login and forgot password
+
 @app.route('/auth/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
    if request.method == 'GET':
@@ -382,45 +398,36 @@ def reset_password(email, reset_code):
          })
 
 
-   # first enter email
-   # see if email exists
-   # if exists, send special code to user
-   # 
-
-# dashboard routes
-@login_required
+### DASHBOARD ### 
 @app.route('/dashboard')
+@login_required
 def dashboard():
    return render_template('pages/dashboard.html',
                           forename=current_user.forename,
                           is_super_user = isSuperUser(current_user)
                           ) 
-                          
 
-def isSuperUser(user) -> bool:
-   try:
-      super_user = SuperUser.query.get(user.id)
-      if super_user:
-            return True 
-      else:
-            return False
-   except Exception as e:
-      print("Error occurred trying to determine if this user was a superuser")
-      print(e)
-      return False  
 
-def isAttendee(user) -> bool:
-   try: 
-      attendee = User.query.filter_by(id = user.id).first()
-      if attendee and attendee.emailVerified and not isSuperUser(user):
-         return True 
-      else:
-         return False
-   except Exception as e:
-      print("Error occurred trying to determine if this user was an attendee")
-      print(e)
-      return False 
-      
+
+@app.route('/dashboard/notifications', methods=['GET','POST'])
+@login_required
+def notifications():
+   if request.method == 'GET':
+      try:
+         # get all notifications for this user, reverse order for ux
+         notifications = Notification.query.filter_by(
+            user_id = current_user.get_id()
+            ).order_by(Notification.sent_at.desc()).all()
+         
+         return render_template('pages/notifications.html', notifications = notifications)
+      except Exception as e:
+         print(f"Error fetching notifications for user {current_user.get_id()}")
+         print(e)
+         flash("Error retrieving your notifications", "error")
+         return redirect(url_for('all_events'))
+
+
+### EVENTS ### 
 
 @app.route('/events/create', methods=['GET','POST'])
 @login_required
@@ -621,37 +628,7 @@ def cancel_event(event_id):
       flash("Only superuser can cancel events", "error")
       return redirect(url_for('dashboard'))
 
-
-# notifcations
-   
-
-@app.route('/dashboard/notifications', methods=['GET','POST'])
-def notifications():
-   if request.method == 'GET':
-      try:
-         # get all notifications for this user, reverse order for ux
-         notifications = Notification.query.filter_by(
-            user_id = current_user.get_id()
-            ).order_by(Notification.sent_at.desc()).all()
-         
-         return render_template('pages/notifications.html', notifications = notifications)
-      except Exception as e:
-         print(f"Error fetching notifications for user {current_user.get_id()}")
-         print(e)
-         flash("Error retrieving your notifications", "error")
-         return redirect(url_for('all_events'))
-
-
-# ticketing routes
-
-def generate_barcode_id():
-    # VERY UNECEESARY, but i plan to work on this application after the coursework
-    # on the off chance, barcode number already exists, keep making new ones#
-      # generate random 13 digit number
-      barcode_id = randint(1000000000000, 10000000000000)
-      return barcode_id
         
-
 @login_required
 @app.route('/events/book/<int:event_id>', methods=['GET','POST'])
 def book_ticket(event_id):
@@ -759,6 +736,9 @@ def my_tickets():
       })
       
 
+
+### TICKETS ### 
+   
 @login_required
 @app.route('/tickets/<int:ticket_id>/cancel', methods = ['PUT'])
 def cancel_ticket(ticket_id):
@@ -787,9 +767,3 @@ def cancel_ticket(ticket_id):
       return jsonify({
          "error" : "An error occured trying to cancel this ticket"
       })
-
-
-
-
-
-
